@@ -208,6 +208,6 @@ __marimo__/
 
 # Project specific
 *.csv
-Data/
+Data/*/
 *venv/
 .DS_Store
