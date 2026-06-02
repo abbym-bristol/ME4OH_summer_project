@@ -3,5 +3,6 @@ Foundation year summer project using data from [MapEval4OceanHeat](https://data.
 
 
 # Set up
-Python env commands;
+Python venv setup commands;
 - pip install netCDF4
+- pip install geopandas geodatasets  # geodatasets might not be needed actually
