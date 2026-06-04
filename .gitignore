@@ -211,3 +211,4 @@ __marimo__/
 Data/*/
 *venv/
 .DS_Store
+images/

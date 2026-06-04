@@ -47,6 +47,8 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, basin=None):
             return
     else:
         basin = "world"
+        ax.set_xlim([-180, 180])
+        ax.set_ylim([-90, 90])
 
     plt.title(title)
     plt.show()
