@@ -208,7 +208,9 @@ __marimo__/
 
 # Project specific
 *.csv
+*.mat
 Data/*/
 *venv/
 .DS_Store
 images/
+models.py
