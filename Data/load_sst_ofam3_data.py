@@ -6,7 +6,6 @@ Load and preprocess ME4OH data SST OFAM3 data for experimentation.
 
 from datetime import date, timedelta
 
-import matplotlib.pyplot as plt
 import netCDF4 as nc
 import pandas as pd
 from tqdm import tqdm
@@ -39,6 +38,7 @@ def load_data():
 
     return temps, dates, lats, longs
 
+
 def process_sst_data(temps, dates, lats, longs):
     """ Iterates through temps array to build DataFrames for each timestamp, of the lat, long and SST values.
     Preprocesses this to change the Longitude coordinates ready for geopandas plotting and to filter to the NA basin
@@ -56,15 +56,12 @@ def process_sst_data(temps, dates, lats, longs):
         sst_array = []
         lat_array = []
         long_array = []
-        date_array = []
         for i in range(len(lats)):
             for j in range(len(longs)):
                 sst_array.append(temps[k][0][i][j])
                 lat_array.append(lats[i])
                 long_array.append(longs[j])
-                date_array.append(dates[k])
         df = pd.DataFrame({
-            "Date": date_array,
             "Latitude": lat_array,
             "Longitude": long_array,
             "SST": sst_array
@@ -83,9 +80,10 @@ def process_sst_data(temps, dates, lats, longs):
         # Filter to NA basin
         na_df = df.loc[(df['Longitude'] >= -80) & (df['Longitude'] <= 0)
                             & (df['Latitude'] <= 60) & (df['Latitude'] >= 0)
-                            ].sort_values('Date').reset_index(drop=True)
+                            ].reset_index(drop=True)
         na_file_name = f"Data/OFAM3/NA/{dates[k]}.csv"
         na_df.to_csv(na_file_name, index=False)
+
 
 if __name__ == "__main__":
     # Read file
