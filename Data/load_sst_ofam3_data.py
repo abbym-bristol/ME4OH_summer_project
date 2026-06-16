@@ -1,9 +1,14 @@
 """load_sst_ofam3_data.py
 
-Load and preprocess ME4OH data SST OFAM3 data for experimentation.
+Load and preprocess ME4OH data SST OFAM3 data for data visualisation.
+Puts in the same format as the ME4OH sampled dataset (but stored in separate files by timestamp)
+
+Basic preprocessing done:
+- Remove filler values (represent lat/long coordinates on land)
+- Convert longitude to -180 to 180 format, allows plotting against geopandas world maps
+- Filter to NA basin
 
 """
-
 from datetime import date, timedelta
 
 import netCDF4 as nc
@@ -11,6 +16,7 @@ import pandas as pd
 from tqdm import tqdm
 
 FILE_PATH = "Data/OFAM3/temp_ofam3_7d_197901-201412.0p25x0p25.nc"
+NA_DATA_PATH = "Data/OFAM3/NA/"
 
 def load_data():
     """ Load the data from the NetCDF file
@@ -81,7 +87,7 @@ def process_sst_data(temps, dates, lats, longs):
         na_df = df.loc[(df['Longitude'] >= -80) & (df['Longitude'] <= 0)
                             & (df['Latitude'] <= 60) & (df['Latitude'] >= 0)
                             ].reset_index(drop=True)
-        na_file_name = f"Data/OFAM3/NA/{dates[k]}.csv"
+        na_file_name = f"{NA_DATA_PATH}{dates[k]}.csv"
         na_df.to_csv(na_file_name, index=False)
 
 
