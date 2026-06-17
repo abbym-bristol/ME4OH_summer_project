@@ -52,8 +52,10 @@ class TimeSeriesDataset(torch.utils.data.Dataset):
 #         # Save out again for ease of processing
 #         data.tofile(f'{data_path}/shred_format_data.csv', sep = ',')
 
-def load_files(file_paths):
+def load_files(data_path=NA_DATA_PATH):
     # TODO: alter so either saves out reformatted version or loads that if it exists
+
+    file_paths = [f for f in glob(os.path.join(data_path, "*.csv"))]
 
     sst_data = []
     dates = []
@@ -67,6 +69,9 @@ def load_files(file_paths):
         date_str = os.path.splitext(base_name)[0]
         dates.append(pd.to_datetime(date_str))
         sst_data.append(df.SST.to_numpy())
+    
+    if len(sst_data) != len(dates):  # Sanity check
+        raise ValueError("data_frames and dates must have the same length")
 
     return np.array(sst_data), np.array(dates), lats, longs
 
@@ -89,7 +94,7 @@ def split_ordered_data(data, train_frac=0.75):
     return train, val, test
 
 
-def create_sequences(data, sensor_locs, num_sensors=NUM_SENSORS, lags=LAGS):
+def create_shred_sequences(data, sensor_locs, num_sensors=NUM_SENSORS, lags=LAGS):
 
     data_in = np.zeros((len(data) - lags, lags, num_sensors))
     for i in range(len(data_in)):
@@ -106,21 +111,11 @@ def create_sequences(data, sensor_locs, num_sensors=NUM_SENSORS, lags=LAGS):
     return dataset
 
 
-def build_shred_datasets(data_path=NA_DATA_PATH, num_sensors=NUM_SENSORS, lags=LAGS):
-    # Build SHRED dataset
-    
+if __name__ == "__main__":
     # Load and reformat data
-    files = [f for f in glob(os.path.join(data_path, "*.csv"))]
-    data, dates, lats, longs = load_files(files)
+    data, dates, lats, longs = load_files()
 
-    if len(data) != len(dates):  # Sanity check
-        raise ValueError("data_frames and dates must have the same length")
-    
     print("Preprocessing data...")
-
-    sensor_locations = np.random.choice(len(lats), size=num_sensors, replace=False)
-    print(f"Sensor location indexes will be: {sensor_locations}")
-
     train_data, val_data, test_data = split_ordered_data(data)
 
     # Normalise data
@@ -131,8 +126,10 @@ def build_shred_datasets(data_path=NA_DATA_PATH, num_sensors=NUM_SENSORS, lags=L
     test_transformed = sc.transform(test_data)
 
     # Build sequences
-    train_dataset = create_sequences(train_transformed, sensor_locations, lags=lags)
-    val_dataset = create_sequences(val_transformed, sensor_locations, lags=lags)
-    test_dataset = create_sequences(test_transformed, sensor_locations, lags=lags)
+    sensor_locations = np.random.choice(data.shape[1], size=NUM_SENSORS, replace=False)
+    print(f"Sensor location indexes will be: {sensor_locations}")
 
-    return train_dataset, val_dataset, test_dataset, dates, lats, longs
+    train_dataset = create_shred_sequences(train_transformed)
+    val_dataset = create_shred_sequences(val_transformed)
+    test_dataset = create_shred_sequences(test_transformed)
+
