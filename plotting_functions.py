@@ -113,3 +113,55 @@ def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None):
     # plt.savefig(f"images/sst_{basin}_map_{title}.png")
     plt.show()
     plt.close()
+
+
+def plot_compare_NA_sst_recon_truth(recon_data, truth_data, title=None, sensor_coords=None, basin=None):
+    """For a given subset of data, plot the SST map over the world or filtered to a specific ocean basin
+    
+    Args:
+        data (df or df.groupby object): dataframe (or df.groupby object of a dataframe) containing columns for
+            latitude, longitude and observed SST.
+        title (str, optional): title for the plot and name for saved figure.
+    Returns:
+        Plot of OHC map, saved figure.
+    """
+    _, ax = plt.subplots(1, 2, figsize=(20, 15))
+
+    # Create a shared normalization object
+    min_sst = min([min(recon_data.SST), min(truth_data.SST)])
+    max_sst = max([max(recon_data.SST), max(truth_data.SST)])
+    norm = Normalize(vmin=min_sst, vmax=max_sst)
+    cmap = plt.cm.plasma   # Define the colormap
+
+    # Reconstruction subfigure
+    for a in ax:
+        a.set_xlabel('Longitude')
+        a.set_ylabel('Latitude')
+        a.set_facecolor('lightblue')
+        a.set_xlim([-80, 0])
+        a.set_ylim([0, 60])
+        NA.plot(ax=a, color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
+    
+    # Reconstruction subfigure
+    s = ax[0].scatter(recon_data.Longitude, recon_data.Latitude, c=recon_data.SST, s=1, cmap=cmap, norm=norm)
+    ax[0].set_title('Reconstructed SST')
+
+    # Truth subfigure
+    # ax[1].set_xlim([-80, 0])
+    # ax[1].set_ylim([0, 60])
+    # NA.plot(ax=ax[1], color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
+    s = ax[1].scatter(truth_data.Longitude, truth_data.Latitude, c=truth_data.SST, s=1, cmap=cmap, norm=norm)
+    ax[1].set_title('True SST')
+
+    cbar = plt.colorbar(s, ax=ax, cmap=cmap, norm=norm)
+    cbar.set_label('SST ($\\degree$C)')
+
+    if sensor_coords is not None:
+        ax[0].scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k')
+        ax[1].scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k')
+
+    if title is not None:
+        plt.title(title)
+    # plt.savefig(f"images/sst_{basin}_map_{title}.png")
+    plt.show()
+    plt.close()
