@@ -55,7 +55,7 @@ class TimeSeriesDataset(torch.utils.data.Dataset):
 def load_files(data_path=NA_DATA_PATH):
     # TODO: alter so either saves out reformatted version or loads that if it exists
 
-    file_paths = [f for f in glob(os.path.join(data_path, "*.csv"))]
+    file_paths = [f for f in sorted(glob(os.path.join(data_path, "*.csv")))]
 
     sst_data = []
     dates = []
@@ -69,15 +69,15 @@ def load_files(data_path=NA_DATA_PATH):
         date_str = os.path.splitext(base_name)[0]
         dates.append(pd.to_datetime(date_str))
         sst_data.append(df.SST.to_numpy())
-    
-    if len(sst_data) != len(dates):  # Sanity check
-        raise ValueError("data_frames and dates must have the same length")
 
     return np.array(sst_data), np.array(dates), lats, longs
 
 
-def split_ordered_data(data, train_frac=0.75):
+def split_ordered_data(data, dates, train_frac=0.75):
 
+    if len(data) != len(dates):  # Sanity check
+        raise ValueError("data_frames and dates must have the same length")
+    
     n_total = len(data)
     n_train = int(np.floor(n_total * train_frac))
     n_remaining = n_total - n_train
@@ -88,10 +88,14 @@ def split_ordered_data(data, train_frac=0.75):
     val = data[n_train:n_train + n_val]
     test = data[n_train + n_val:]
 
+    train_dates = dates[:n_train]
+    val_dates = dates[n_train:n_train + n_val]
+    test_dates = dates[n_train + n_val:]
+
     if len(test) != n_test:  # Sanity check
         raise ValueError("Test data of wrong length")
 
-    return train, val, test
+    return train, val, test, train_dates, val_dates, test_dates
 
 
 def create_shred_sequences(data, sensor_locs, num_sensors=NUM_SENSORS, lags=LAGS):
@@ -132,4 +136,3 @@ if __name__ == "__main__":
     train_dataset = create_shred_sequences(train_transformed)
     val_dataset = create_shred_sequences(val_transformed)
     test_dataset = create_shred_sequences(test_transformed)
-

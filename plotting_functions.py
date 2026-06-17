@@ -61,7 +61,7 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, basin=None):
     plt.close()
 
 
-def plot_sst_map(data, title, min_sst, max_sst, basin=None):
+def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None):
     """For a given subset of data, plot the SST map over the world or filtered to a specific ocean basin
     
     Args:
@@ -101,6 +101,9 @@ def plot_sst_map(data, title, min_sst, max_sst, basin=None):
 
     cbar = plt.colorbar(s, ax=ax, cmap=cmap, norm=norm)
     cbar.set_label('SST ($\\degree$ C)')
+
+    if sensor_coords is not None:
+        plt.scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k')
 
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
