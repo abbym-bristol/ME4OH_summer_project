@@ -76,7 +76,7 @@ def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None):
     Returns:
         Plot of OHC map, saved figure.
     """
-    _, ax = plt.subplots(figsize=(15, 9))
+    fig, ax = plt.subplots(figsize=(10, 6))
 
     # Get world countries, and plot
     if basin is not None:
@@ -100,11 +100,11 @@ def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None):
     # Plot SST map
     s = ax.scatter(data.Longitude, data.Latitude, c=data.SST, s=1, cmap='plasma', norm=norm)
 
-    cbar = plt.colorbar(s, ax=ax, cmap=cmap, norm=norm)
+    cbar = fig.colorbar(s, ax=ax, cmap=cmap, norm=norm)
     cbar.set_label('SST ($\\degree$ C)')
 
     if sensor_coords is not None:
-        plt.scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k')
+        ax.scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k')
 
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
@@ -116,8 +116,8 @@ def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None):
     plt.close()
 
 
-def plot_compare_NA_sst_recon_truth(recon_data, truth_data, title=None, sensor_coords=None, basin=None):
-    """For a given subset of data, plot the SST map over the world or filtered to a specific ocean basin
+def plot_compare_NA_sst_recon_truth(recon_data, truth_data, title=None, sensor_coords=None):
+    """For a given subset of data, plot the SST map over the NA basin
     
     Args:
         data (df or df.groupby object): dataframe (or df.groupby object of a dataframe) containing columns for
@@ -126,7 +126,7 @@ def plot_compare_NA_sst_recon_truth(recon_data, truth_data, title=None, sensor_c
     Returns:
         Plot of OHC map, saved figure.
     """
-    fig, ax = plt.subplots(1, 2, figsize=(15, 9))
+    fig, ax = plt.subplots(1, 2, figsize=(15, 5))
 
     # Create a shared normalization object
     min_sst = min([min(recon_data.SST), min(truth_data.SST)])
@@ -150,20 +150,14 @@ def plot_compare_NA_sst_recon_truth(recon_data, truth_data, title=None, sensor_c
         ax[0].scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k')
 
     # Truth subfigure
-    # ax[1].set_xlim([-80, 0])
-    # ax[1].set_ylim([0, 60])
-    # NA.plot(ax=ax[1], color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
     s = ax[1].scatter(truth_data.Longitude, truth_data.Latitude, c=truth_data.SST, s=1, cmap=cmap, norm=norm)
     ax[1].set_title('True SST')
 
-    gca = plt.gca()
-    divider = make_axes_locatable(gca)
-    cax = divider.append_axes("right", pad=0.05, size="5%")
-    cbar = plt.colorbar(s, cax=cax, cmap=cmap, norm=norm)
+    cbar = fig.colorbar(s, ax=ax, cmap=cmap, norm=norm)
     cbar.set_label('SST ($\\degree$C)')
 
     if title is not None:
         fig.suptitle(title)
-    # plt.savefig(f"images/sst_{basin}_map_{title}.png")
+    # plt.savefig(f"images/sst_comparison_{basin}_map_{title}.png")
     plt.show()
     plt.close()
