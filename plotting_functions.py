@@ -1,7 +1,6 @@
 import geopandas as gpd
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # TODO: Combine into unified plotting function
 
@@ -25,7 +24,7 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, basin=None):
     Returns:
         Plot of OHC map, saved figure.
     """
-    _, ax = plt.subplots(figsize=(15, 9))
+    fig, ax = plt.subplots(figsize=(15, 9))
 
     # Get world countries, and plot
     WORLD.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
@@ -37,7 +36,7 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, basin=None):
     # Plot OHC map
     s = ax.scatter(data.Longitude, data.Latitude, c=data.OHC, s=1, cmap='plasma', norm=norm)  # Plot OHC observations
     
-    cbar = plt.colorbar(s, ax=ax, cmap=cmap, norm=norm)
+    cbar = fig.colorbar(s, ax=ax, cmap=cmap, norm=norm)
     cbar.set_label('OHC $(Jm^{−2})$')
 
     ax.set_xlabel('Longitude')
