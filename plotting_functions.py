@@ -1,6 +1,7 @@
 import geopandas as gpd
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # TODO: Combine into unified plotting function
 
@@ -125,7 +126,7 @@ def plot_compare_NA_sst_recon_truth(recon_data, truth_data, title=None, sensor_c
     Returns:
         Plot of OHC map, saved figure.
     """
-    _, ax = plt.subplots(1, 2, figsize=(20, 15))
+    fig, ax = plt.subplots(1, 2, figsize=(15, 9))
 
     # Create a shared normalization object
     min_sst = min([min(recon_data.SST), min(truth_data.SST)])
@@ -145,6 +146,8 @@ def plot_compare_NA_sst_recon_truth(recon_data, truth_data, title=None, sensor_c
     # Reconstruction subfigure
     s = ax[0].scatter(recon_data.Longitude, recon_data.Latitude, c=recon_data.SST, s=1, cmap=cmap, norm=norm)
     ax[0].set_title('Reconstructed SST')
+    if sensor_coords is not None:
+        ax[0].scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k')
 
     # Truth subfigure
     # ax[1].set_xlim([-80, 0])
@@ -153,15 +156,14 @@ def plot_compare_NA_sst_recon_truth(recon_data, truth_data, title=None, sensor_c
     s = ax[1].scatter(truth_data.Longitude, truth_data.Latitude, c=truth_data.SST, s=1, cmap=cmap, norm=norm)
     ax[1].set_title('True SST')
 
-    cbar = plt.colorbar(s, ax=ax, cmap=cmap, norm=norm)
+    gca = plt.gca()
+    divider = make_axes_locatable(gca)
+    cax = divider.append_axes("right", pad=0.05, size="5%")
+    cbar = plt.colorbar(s, cax=cax, cmap=cmap, norm=norm)
     cbar.set_label('SST ($\\degree$C)')
 
-    if sensor_coords is not None:
-        ax[0].scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k')
-        ax[1].scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k')
-
     if title is not None:
-        plt.title(title)
+        fig.suptitle(title)
     # plt.savefig(f"images/sst_{basin}_map_{title}.png")
     plt.show()
     plt.close()
