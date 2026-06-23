@@ -1,6 +1,7 @@
 import geopandas as gpd
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # TODO: Combine into unified plotting function
 
@@ -90,7 +91,7 @@ def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None, 
     cbar.set_label('SST ($\\degree$ C)')
 
     if sensor_coords is not None:
-        ax.scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k')
+        ax.scatter(sensor_coords[0], sensor_coords[1], marker='.', c='k')
 
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
@@ -117,9 +118,10 @@ def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None, 
     plt.close()
 
 
-def plot_compare_NA_sst_recon_truth(recon_data, truth_data, title=None, sensor_coords=None):
+def plot_compare_NA_sst_recon_truth(recon_data, truth_data, diff_data=None,
+                                    title=None, sensor_coords=None):
     """For a given subset of data, plot the SST map over the NA basin
-    
+    TODO - UPDATE DOC STRINGS
     Args:
         data (df or df.groupby object): dataframe (or df.groupby object of a dataframe) containing columns for
             latitude, longitude and observed SST.
@@ -127,27 +129,45 @@ def plot_compare_NA_sst_recon_truth(recon_data, truth_data, title=None, sensor_c
     Returns:
         Plot of OHC map, saved figure.
     """
-    fig, ax = plt.subplots(1, 2, figsize=(15, 5))
+    if diff_data is not None:
+        fig, ax = plt.subplots(1, 3, figsize=(18, 10))
+    else:
+        fig, ax = plt.subplots(1, 2, figsize=(15, 5))
 
-    # Create a shared normalization object
+    # Create a shared normalization object for SST plots
     min_sst = min([min(recon_data.SST), min(truth_data.SST)])
     max_sst = max([max(recon_data.SST), max(truth_data.SST)])
     norm = Normalize(vmin=min_sst, vmax=max_sst)
-    cmap = plt.cm.plasma   # Define the colormap
+    cmap = 'plasma'
 
-    
     # Reconstruction subfigure
     s = ax[0].scatter(recon_data.Longitude, recon_data.Latitude, c=recon_data.SST, s=1, cmap=cmap, norm=norm)
-    ax[0].set_title('Reconstructed SST')
+    ax[0].set_title('Reconstructed SST ($\\degree$C)')
     if sensor_coords is not None:
-        ax[0].scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k')
+        ax[0].scatter(sensor_coords[0], sensor_coords[1], marker='.', c='k')
+    if diff_data is not None:
+        cax = make_axes_locatable(ax[0]).append_axes('right', size='5%', pad=0.1)
+        cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm)
 
     # Truth subfigure
     s = ax[1].scatter(truth_data.Longitude, truth_data.Latitude, c=truth_data.SST, s=1, cmap=cmap, norm=norm)
-    ax[1].set_title('True SST')
+    ax[1].set_title('True SST ($\\degree$C)')
 
-    cbar = fig.colorbar(s, ax=ax, cmap=cmap, norm=norm)
-    cbar.set_label('SST ($\\degree$C)')
+    if diff_data is not None:
+        cax = make_axes_locatable(ax[1]).append_axes('right', size='5%', pad=0.1)
+        cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm)
+    else:
+        cbar = fig.colorbar(s, ax=ax, cmap=cmap, norm=norm)
+        cbar.set_label('SST ($\\degree$C)')
+    
+    # Difference subfigure
+    if diff_data is not None:
+        norm_diff = Normalize(vmin=-5, vmax=5)
+        cmap_diff = 'bwr'
+        s = ax[2].scatter(diff_data.Longitude, diff_data.Latitude, c=diff_data.SST, s=1, cmap=cmap_diff, norm=norm_diff)
+        ax[2].set_title('Difference ($\\degree$C)')
+        cax = make_axes_locatable(ax[2]).append_axes('right', size='5%', pad=0.1)
+        cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm)
 
     # Style
     for a in ax:

@@ -67,7 +67,7 @@ def load_files(data_path=NA_DATA_PATH):
             longs = df.Longitude.to_numpy()
         base_name = os.path.basename(file_path)
         date_str = os.path.splitext(base_name)[0]
-        dates.append(pd.to_datetime(date_str))
+        dates.append(pd.to_datetime(date_str).date())
         sst_data.append(df.SST.to_numpy())
 
     return np.array(sst_data), np.array(dates), lats, longs
