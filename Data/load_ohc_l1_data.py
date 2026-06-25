@@ -15,6 +15,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+from Data.load_sst_en411_data import crop_df_to_area
+
 DATA_PATH = 'Data/ME4OH_EN411_OFAM3/data/en4.1.1/1993-2014/'
 
 def load_and_filter_ohc(filepath):
@@ -83,9 +85,7 @@ if __name__ == "__main__":
 
     # Filter to NA basin
     print("Filtering NA basin...")
-    na_df = ohc_df.loc[(ohc_df['Longitude'] >= -80) & (ohc_df['Longitude'] <= 0)
-                        & (ohc_df['Latitude'] <= 60) & (ohc_df['Latitude'] >= 0)
-                        ].sort_values('Date').reset_index(drop=True)
+    na_df = crop_df_to_area(ohc_df, "NA", "Date")
     na_file_name = "Data/ME4OH_EN411_OFAM3/NA_1993_2014.csv"
     na_df.to_csv(na_file_name, index=False)
     print(f"NA basin dataset saved as {na_file_name}")
