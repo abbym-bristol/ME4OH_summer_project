@@ -1,12 +1,10 @@
 """preprocess_sst_ofam3_shred.py
 
-Helper files for preprocessing ME4OH data SST OFAM3 data for SHRED algorithm
+Helper functions for preprocessing ME4OH data SST OFAM3 data for the SHRED algorithm
 
-Prerequisites: load_sst_ofams3_data.py must be run first, giving NA basin data stored under NA_DATA_PATH
+Prerequisites: load_sst_ofams3_data.py must be run first, producing NA basin data stored under NA_DATA_PATH
 
 """
-# TODO - docstrings
-
 import os
 from glob import glob
 
@@ -25,7 +23,10 @@ np.random.seed(42)
 
 class TimeSeriesDataset(torch.utils.data.Dataset):
     '''Takes input sequence of sensor measurements with shape (batch size, lags, num_sensors)
-    and corresponding measurements of high-dimensional state, return Torch dataset'''
+    and corresponding measurements of high-dimensional state, return Torch dataset
+    
+    Origin: https://github.com/Jan-Williams/pyshred/blob/main/processdata.py
+    '''
     def __init__(self, X, Y):
         self.X = X
         self.Y = Y
@@ -52,10 +53,20 @@ class TimeSeriesDataset(torch.utils.data.Dataset):
 #         # Save out again for ease of processing
 #         data.tofile(f'{data_path}/shred_format_data.csv', sep = ',')
 
-def load_files(data_path=NA_DATA_PATH):
-    # TODO: alter so either saves out reformatted version or loads that if it exists
+def load_files():
+    """Load files and get data from files that have already been preprocessed to contain only
+    North Atlantic basin data using load_sst_ofam3_data.py and stored in NA_DATA_PATH
 
-    file_paths = [f for f in sorted(glob(os.path.join(data_path, "*.csv")))]
+    Returns:
+        sst_data (2D numpy array): SST value at each time for each lat/long across area used
+            2D array of format [[array of lat/long SST values for time 1], [array of lat/long SST values for time 2], ...]
+        dates (numpy array): array of dates for each time in dataset (from filenames)
+        lats (numpy array): array of latitudes corresponding to SST values
+        longs (numpy array): array of longitudes corresponding to SST values
+    """
+    # TODO: alter so either saves out reformatted version or loads that if it exists?
+
+    file_paths = [f for f in sorted(glob(os.path.join(NA_DATA_PATH, "*.csv")))]
 
     sst_data = []
     dates = []
@@ -74,7 +85,17 @@ def load_files(data_path=NA_DATA_PATH):
 
 
 def split_ordered_data(data, dates, train_frac=0.75):
+    """Split ordered data into training, validation and test sets according to date
 
+    Args:
+        data (2D numpy array): 2D array of data to split of format [[values for time 1], [values for time 2], ...]
+        dates (numpy array): array of dates for each time in data
+        train_frac (float, optional): fraction of training data to use, defaults to 0.75.
+
+    Returns:
+        train, val, test (2D numpy arrays): train, val and test splits of data using ratio train_frac:(1-train_frac)/2:(1-train_frac)/2
+        test_dates (numpy array): array of dates for test set
+    """
     if len(data) != len(dates):  # Sanity check
         raise ValueError("data_frames and dates must have the same length")
     
@@ -98,8 +119,18 @@ def split_ordered_data(data, dates, train_frac=0.75):
     return train, val, test, test_dates
 
 
-def create_shred_sequences(data, sensor_locs, num_sensors=NUM_SENSORS, lags=LAGS):
+def create_shred_sequences(data, sensor_locs, lags=LAGS):
+    """Create sequences for input to the SHRED model
 
+    Args:
+        data (2D numpy array): 2D array of data to split of format [[values for time 1], [values for time 2], ...]
+        sensor_locs (list): indexes corresponding to the shape of the values for time t in data that indicate the sensor locations to use for the model
+        lags (int, optional): number of weeks in each sequence, defaults to LAGS (52)
+
+    Returns:
+        dataset (TimeSeriesDataset): torch tensor dataset of input sequences and labels (entire data field at the end of each sequence)
+    """
+    num_sensors = len(sensor_locs)
     data_in = np.zeros((len(data) - lags, lags, num_sensors))
     for i in range(len(data_in)):
         data_in[i] = data[i:i+lags, sensor_locs]  # stores values between i and 52 weeks, at 3 sensor locations
