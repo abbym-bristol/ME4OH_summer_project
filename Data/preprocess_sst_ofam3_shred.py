@@ -88,14 +88,14 @@ def split_ordered_data(data, dates, train_frac=0.75):
     val = data[n_train:n_train + n_val]
     test = data[n_train + n_val:]
 
-    train_dates = dates[:n_train]
-    val_dates = dates[n_train:n_train + n_val]
+    # train_dates = dates[:n_train]
+    # val_dates = dates[n_train:n_train + n_val]
     test_dates = dates[n_train + n_val:]
 
     if len(test) != n_test:  # Sanity check
         raise ValueError("Test data of wrong length")
 
-    return train, val, test, train_dates, val_dates, test_dates
+    return train, val, test, test_dates
 
 
 def create_shred_sequences(data, sensor_locs, num_sensors=NUM_SENSORS, lags=LAGS):

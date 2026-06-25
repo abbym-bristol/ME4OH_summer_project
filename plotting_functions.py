@@ -3,12 +3,34 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-# TODO: Combine into unified plotting function
+# TODO: Combine into unified plotting function?
+# TODO: Docstrings
 
 COUNTRIES_URL = "https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.zip"
 WORLD = gpd.read_file(COUNTRIES_URL).rename({"ADMIN": "name"}, axis="columns")
 regions = ['Southern Europe', 'Northern Africa', 'Western Africa', 'Western Europe', 'Northern Europe', 'Central America', 'South America', 'Northern America', 'Caribbean']
 NA = WORLD[WORLD['SUBREGION'].isin(regions)]
+
+
+def set_basin(ax, basin):
+     # Get world countries, and plot
+    if basin is not None:
+        if basin == "NA":
+            ax.set_xlim([-80, 0])
+            ax.set_ylim([0, 60])
+            NA.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
+        elif basin == "GS":
+            ax.set_xlim([-80, -30])
+            ax.set_ylim([30, 50])
+            NA.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
+        else:
+            plt.close()
+            return
+    else:
+        basin = "world"
+        ax.set_xlim([-180, 180])
+        ax.set_ylim([-90, 90])
+        WORLD.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
 
 
 def plot_ohc_map(data, title, min_ohc, max_ohc, basin=None):
@@ -27,9 +49,6 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, basin=None):
     """
     fig, ax = plt.subplots(figsize=(15, 9))
 
-    # Get world countries, and plot
-    WORLD.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
-
     # Create a shared normalization object
     norm = Normalize(vmin=min_ohc, vmax=max_ohc)
     cmap = plt.cm.plasma   # Define the colormap
@@ -44,17 +63,7 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, basin=None):
     ax.set_ylabel('Latitude')
     # ax.set_facecolor("lightblue")
 
-    if basin is not None:
-        if basin == "NA":
-            ax.set_xlim([-80, 0])
-            ax.set_ylim([0, 60])
-        else:
-            plt.close()
-            return
-    else:
-        basin = "world"
-        ax.set_xlim([-180, 180])
-        ax.set_ylim([-90, 90])
+    set_basin(ax, basin)
 
     plt.title(title)
     plt.savefig(f"images/ohc_{basin}_map_{title}.png")
@@ -78,8 +87,6 @@ def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None, 
     """
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    
-
     # Create a shared normalization object
     norm = Normalize(vmin=min_sst, vmax=max_sst)
     # cmap = plt.cm.plasma   # Define the colormap
@@ -88,7 +95,7 @@ def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None, 
     s = ax.scatter(data.Longitude, data.Latitude, c=data.SST, s=1, cmap=cmap, norm=norm)
 
     cbar = fig.colorbar(s, ax=ax, cmap=cmap, norm=norm)
-    cbar.set_label('SST ($\\degree$ C)')
+    cbar.set_label('SST ($\\degree$C)')
 
     if sensor_coords is not None:
         ax.scatter(sensor_coords[0], sensor_coords[1], marker='.', c='k')
@@ -97,20 +104,7 @@ def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None, 
     ax.set_ylabel('Latitude')
     # ax.set_facecolor("lightblue")
 
-    # Get world countries, and plot
-    if basin is not None:
-        if basin == "NA":
-            ax.set_xlim([-80, 0])
-            ax.set_ylim([0, 60])
-            NA.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
-        else:
-            plt.close()
-            return
-    else:
-        basin = "world"
-        ax.set_xlim([-180, 180])
-        ax.set_ylim([-90, 90])
-        WORLD.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
+    set_basin(ax, basin)
 
     plt.title(title)
     # plt.savefig(f"images/sst_{basin}_map_{title}.png")
@@ -119,7 +113,7 @@ def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None, 
 
 
 def plot_compare_NA_sst_recon_truth(recon_data, truth_data, diff_data=None,
-                                    title=None, sensor_coords=None):
+                                    title=None, sensor_coords=None, basin=None):
     """For a given subset of data, plot the SST map over the NA basin
     TODO - UPDATE DOC STRINGS
     Args:
@@ -174,9 +168,7 @@ def plot_compare_NA_sst_recon_truth(recon_data, truth_data, diff_data=None,
         a.set_xlabel('Longitude')
         a.set_ylabel('Latitude')
         # a.set_facecolor('lightblue')
-        a.set_xlim([-80, 0])
-        a.set_ylim([0, 60])
-        NA.plot(ax=a, color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
+        set_basin(a, basin)
 
     if title is not None:
         fig.suptitle(title)
