@@ -101,7 +101,10 @@ def plot_sst_map(data, title, min_sst, max_sst, area="world", cmap='plasma', sen
     Returns:
         Plot of OHC map, saved figure.
     """
-    fig, ax = plt.subplots(figsize=(10, 6))
+    if area=="world":
+        fig, ax = plt.subplots(figsize=(15, 9))
+    else:
+        fig, ax = plt.subplots(figsize=(10, 6))
 
     # Create a shared normalization object
     norm = Normalize(vmin=min_sst, vmax=max_sst)
