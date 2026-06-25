@@ -79,13 +79,13 @@ if __name__ == "__main__":
     print("Converting longitudes...")
     tqdm.pandas()
     ohc_df['Longitude'] = ohc_df['Longitude'].progress_apply(lambda x: -(360-x) if x > 180 else x)
-    world_file_name = "Data/ME4OH_EN411_OFAM3/WORLD_1993_2014.csv"
+    world_file_name = "Data/ME4OH_EN411_OFAM3/OHC_WORLD_1993_2014.csv"
     ohc_df.to_csv(world_file_name, index=False)
     print(f"Whole dataset saved as {world_file_name}")
 
     # Filter to NA basin
     print("Filtering NA basin...")
     na_df = crop_df_to_area(ohc_df, "NA", "Date")
-    na_file_name = "Data/ME4OH_EN411_OFAM3/NA_1993_2014.csv"
+    na_file_name = "Data/ME4OH_EN411_OFAM3/OHC_NA_1993_2014.csv"
     na_df.to_csv(na_file_name, index=False)
     print(f"NA basin dataset saved as {na_file_name}")
