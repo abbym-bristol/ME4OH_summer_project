@@ -12,28 +12,41 @@ regions = ['Southern Europe', 'Northern Africa', 'Western Africa', 'Western Euro
 NA = WORLD[WORLD['SUBREGION'].isin(regions)]
 
 
-def set_basin(ax, basin):
+def set_area(ax, area):
+    """For a specified area of the globe, configure the plotting axes
+
+    Args:
+        ax (Axes): axis to configure
+        area (str): area to use -> currently configured options are:
+            "NA" - North Atlantic basin
+            "GS" - gulf stream region of NA basin
+            "world" - the whole global ocean
+    """
      # Get world countries, and plot
-    if basin is not None:
-        if basin == "NA":
+    if area is not None:
+        if area == "NA":
             ax.set_xlim([-80, 0])
             ax.set_ylim([0, 60])
             NA.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
-        elif basin == "GS":
+        elif area == "GS":
             ax.set_xlim([-80, -30])
             ax.set_ylim([30, 50])
             NA.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
+        elif area == "world":
+            ax.set_xlim([-180, 180])
+            ax.set_ylim([-90, 90])
+            WORLD.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
         else:
+            print(f"Area specified {area} has not yet been configured")
             plt.close()
             return
     else:
-        basin = "world"
-        ax.set_xlim([-180, 180])
-        ax.set_ylim([-90, 90])
-        WORLD.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.75)  # Add countries
+        print("No area specified")
+        plt.close()
+        return
 
 
-def plot_ohc_map(data, title, min_ohc, max_ohc, basin=None):
+def plot_ohc_map(data, title, min_ohc, max_ohc, area="world"):
     """For a given subset of data, plot the OHC map over the world or filtered to a specific ocean basin
     
     Args:
@@ -42,8 +55,8 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, basin=None):
         title (str): title for the plot and name for saved figure.
         min_ohc (float): minimum OHC value across entire dataset (ensures uniform colourbar)
         min_ohc (float): maximum OHC value across entire dataset (ensures uniform colourbar)
-        basin (str, optional): basin to plot for. Current options are None (which will plot over the whole world),
-            or "NA" (which will filter to the NA basin). Other options to be added as needed, but for now will throw error.
+        area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin),
+            "GS" (Gulf stream region of NA basin), or "world" (whole globe, default).
     Returns:
         Plot of OHC map, saved figure.
     """
@@ -63,16 +76,16 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, basin=None):
     ax.set_ylabel('Latitude')
     # ax.set_facecolor("lightblue")
 
-    set_basin(ax, basin)
+    set_area(ax, area)
 
     plt.title(title)
-    plt.savefig(f"images/ohc_{basin}_map_{title}.png")
+    # plt.savefig(f"images/ohc_{area}_map_{title}.png")
     plt.show()
     plt.close()
 
 
-def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None, cmap='plasma'):
-    """For a given subset of data, plot the SST map over the world or filtered to a specific ocean basin
+def plot_sst_map(data, title, min_sst, max_sst, area="world", cmap='plasma', sensor_coords=None):
+    """For a given subset of data, plot the SST map over the world or filtered to a specific area of the ocean
     
     Args:
         data (df or df.groupby object): dataframe (or df.groupby object of a dataframe) containing columns for
@@ -80,8 +93,12 @@ def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None, 
         title (str): title for the plot and name for saved figure.
         min_sst (float): minimum value across entire dataset (ensures uniform colourbar)
         min_sst (float): maximum value across entire dataset (ensures uniform colourbar)
-        basin (str, optional): basin to plot for. Current options are None (which will plot over the whole world),
-            or "NA" (which will filter to the NA basin). Other options to be added as needed, but for now will throw error.
+        area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin),
+            "GS" (Gulf stream region of NA basin), or "world" (whole globe, default).
+        cmap (str or plt colormap, optional): colourmap to use for figure, defaults to "plasma".
+        sensor_coords (tuple): tuple of arrays (longs[sensor_locations], lats[sensor_locations])
+            i.e. longitudes and latitudes at the sensor locations used for the reconstruction. If None, not plotted.
+
     Returns:
         Plot of OHC map, saved figure.
     """
@@ -104,22 +121,31 @@ def plot_sst_map(data, title, min_sst, max_sst, sensor_coords=None, basin=None, 
     ax.set_ylabel('Latitude')
     # ax.set_facecolor("lightblue")
 
-    set_basin(ax, basin)
+    set_area(ax, area)
 
     plt.title(title)
-    # plt.savefig(f"images/sst_{basin}_map_{title}.png")
+    # plt.savefig(f"images/sst_{area}_map_{title}.png")
     plt.show()
     plt.close()
 
 
-def plot_compare_NA_sst_recon_truth(recon_data, truth_data, diff_data=None,
-                                    title=None, sensor_coords=None, basin=None):
-    """For a given subset of data, plot the SST map over the NA basin
-    TODO - UPDATE DOC STRINGS
+def plot_compare_sst_recon(recon_data, truth_data, area="world", diff_data=None, sensor_coords=None, title=None):
+    """For a given subset of data, plot the SST map over a set area of the ocean for either reconstruction and ground truth,
+    or reconstruction, ground truth and difference between the two.
+
     Args:
-        data (df or df.groupby object): dataframe (or df.groupby object of a dataframe) containing columns for
-            latitude, longitude and observed SST.
-        title (str, optional): title for the plot and name for saved figure.
+        recon_data (df or df.groupby object): dataframe (or df.groupby object of a dataframe) containing columns for
+            latitude, longitude and SST (reconstructed).
+        truth_data (df or df.groupby object): dataframe (or df.groupby object of a dataframe) containing columns for
+            latitude, longitude and SST (ground truth).
+        area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin),
+            "GS" (Gulf stream region of NA basin), or "world" (whole globe, default).
+        diff_data (df or df.groupby object, optional): dataframe (or df.groupby object of a dataframe) containing columns for
+            latitude, longitude and SST (difference between recon_data and truth_data values). If None, difference is not plotted.
+        sensor_coords (tuple): tuple of arrays (longs[sensor_locations], lats[sensor_locations])
+            i.e. longitudes and latitudes at the sensor locations used for the reconstruction. If None, not plotted.
+        title (str, optional): title for the plot and name for saved figure. If None, no title used.
+
     Returns:
         Plot of OHC map, saved figure.
     """
@@ -167,11 +193,10 @@ def plot_compare_NA_sst_recon_truth(recon_data, truth_data, diff_data=None,
     for a in ax:
         a.set_xlabel('Longitude')
         a.set_ylabel('Latitude')
-        # a.set_facecolor('lightblue')
-        set_basin(a, basin)
+        set_area(a, area)
 
     if title is not None:
         fig.suptitle(title)
-    # plt.savefig(f"images/sst_comparison_{basin}_map_{title}.png")
+    # plt.savefig(f"images/sst_comparison_{area}_map_{title}.png")
     plt.show()
     plt.close()
