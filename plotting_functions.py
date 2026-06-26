@@ -59,7 +59,7 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, area="world"):
     Returns:
         Plot of OHC map, saved figure.
     """
-    fig, ax = plt.subplots(figsize=(15, 9))
+    fig, ax = plt.subplots(figsize=(18, 9))
 
     # Create a shared normalization object
     norm = Normalize(vmin=min_ohc, vmax=max_ohc)
@@ -101,7 +101,10 @@ def plot_sst_map(data, title, min_sst, max_sst, area="world", cmap='plasma', sen
     Returns:
         Plot of OHC map, saved figure.
     """
-    fig, ax = plt.subplots(figsize=(10, 6))
+    if area=="world":
+        fig, ax = plt.subplots(figsize=(18, 9))
+    else:
+        fig, ax = plt.subplots(figsize=(12, 6))
 
     # Create a shared normalization object
     norm = Normalize(vmin=min_sst, vmax=max_sst)
@@ -149,9 +152,9 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", diff_data=None,
         Plot of OHC map, saved figure.
     """
     if diff_data is not None:
-        fig, ax = plt.subplots(1, 3, figsize=(18, 10))
+        fig, ax = plt.subplots(1, 3, figsize=(18, 9))
     else:
-        fig, ax = plt.subplots(1, 2, figsize=(15, 5))
+        fig, ax = plt.subplots(1, 2, figsize=(18, 9))
 
     # Create a shared normalization object for SST plots
     min_sst = min([min(recon_data.SST), min(truth_data.SST)])
