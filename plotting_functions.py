@@ -83,7 +83,7 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, area="world"):
     plt.close()
 
 
-def plot_sst_map(data, title, min_sst, max_sst, area="world", cmap='plasma', sensor_coords=None):
+def plot_sst_map(data, title, min_sst, max_sst, area="world", background=False, cmap='plasma', sensor_coords=None):
     """For a given subset of data, plot the SST map over the world or filtered to a specific area of the ocean
     
     Args:
@@ -95,6 +95,7 @@ def plot_sst_map(data, title, min_sst, max_sst, area="world", cmap='plasma', sen
         area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin),
             "GS" (Gulf stream region of NA basin), or "world" (whole globe, default).
         cmap (str or plt colormap, optional): colourmap to use for figure, defaults to "plasma".
+        background (bool, optional): whether to fill the plot with a blue background, defaults to False.
         sensor_coords (tuple): tuple of arrays (longs[sensor_locations], lats[sensor_locations])
             i.e. longitudes and latitudes at the sensor locations used for the reconstruction. If None, not plotted.
 
@@ -121,7 +122,8 @@ def plot_sst_map(data, title, min_sst, max_sst, area="world", cmap='plasma', sen
 
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
-    # ax.set_facecolor("lightblue")
+    if background:
+        ax.set_facecolor("lightblue")
 
     set_area(ax, area)
 
@@ -190,6 +192,60 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", diff_data=None,
         ax[2].set_title('Difference ($\\degree$C)')
         cax = make_axes_locatable(ax[2]).append_axes('right', size='5%', pad=0.1)
         cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm)
+
+    # Style
+    for a in ax:
+        a.set_xlabel('Longitude')
+        a.set_ylabel('Latitude')
+        set_area(a, area)
+
+    if title is not None:
+        fig.suptitle(title)
+    # plt.savefig(f"images/sst_comparison_{area}_map_{title}.png")
+    plt.show()
+    plt.close()
+
+
+def plot_compare_ff_insitu(ff_data, insitu_data, area="world", title=None):
+    """For a given subset of data, plot the SST map over a set area of the ocean for either reconstruction and ground truth,
+    or reconstruction, ground truth and difference between the two.
+
+    Args:
+        ff_data (df or df.groupby object): dataframe (or df.groupby object of a dataframe) containing columns for
+            latitude, longitude and SST (full-field simulation data).
+        insitu_data (df or df.groupby object): dataframe (or df.groupby object of a dataframe) containing columns for
+            latitude, longitude and SST (in-situ simulation data).
+        area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin),
+            "GS" (Gulf stream region of NA basin), or "world" (whole globe, default).
+        title (str, optional): title for the plot and name for saved figure. If None, no title used.
+
+    Returns:
+        Plot of OHC map, saved figure.
+    """
+    fig, ax = plt.subplots(1, 2, figsize=(18, 9))
+
+    # Create a shared normalization object for SST plots
+    min_sst = min([min(ff_data.SST), min(insitu_data.SST)])
+    max_sst = max([max(ff_data.SST), max(insitu_data.SST)])
+    norm = Normalize(vmin=min_sst, vmax=max_sst)
+    cmap = 'plasma'
+
+    # Full-Field subfigure
+    s = ax[0].scatter(ff_data.Longitude, ff_data.Latitude, c=ff_data.SST, s=1, cmap=cmap, norm=norm)
+    ax[0].set_title('Full-field SST ($\\degree$C)')
+
+    cax = make_axes_locatable(ax[0]).append_axes('right', size='5%', pad=0.1)
+    cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm)
+    cbar.set_label('SST ($\\degree$C)')
+
+    # In-situ subfigure
+    s = ax[1].scatter(insitu_data.Longitude, insitu_data.Latitude, c=insitu_data.SST, s=1, cmap=cmap, norm=norm)
+    ax[1].set_title('In-situ SST ($\\degree$C)')
+    ax[1].set_facecolor("lightblue")
+
+    cax = make_axes_locatable(ax[1]).append_axes('right', size='5%', pad=0.1)
+    cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm)
+    cbar.set_label('SST ($\\degree$C)')
 
     # Style
     for a in ax:
