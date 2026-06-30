@@ -194,7 +194,7 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", diff_data=None,
         s = ax[2].scatter(diff_data.Longitude, diff_data.Latitude, c=diff_data.SST, s=1, cmap=cmap_diff, norm=norm_diff)
         ax[2].set_title('Difference ($\\degree$C)')
         cax = make_axes_locatable(ax[2]).append_axes('right', size='5%', pad=0.1)
-        cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm)
+        cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm_diff)
 
     # Style
     for a in ax:
