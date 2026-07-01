@@ -24,17 +24,19 @@ def ssi_by_image(test_values, true_values, lats, longs, plot_images=False):
     """
     
     ssi_images = []
-    for i in range(len(test_values)):
+    for i in [0]:  # range(len(test_values)):
+        
         truth = true_values[i]
         test = test_values[i]
 
+        # ISSUE: changing the figure size changes the SSI score.... probably because scatter points no longer overlap + more white is more similar
         plt.scatter(x=longs, y=lats, c=test, cmap='plasma', s=1)
         ax = plt.gca()
         ax.set_xlim([-80, 0])
         ax.set_ylim([0, 60])
         plt.axis('off')
         plt.savefig("images/test.png", bbox_inches='tight', pad_inches=0)
-        plt.clf()
+        plt.close()
 
         plt.scatter(x=longs, y=lats, c=truth, cmap='plasma', s=1)
         ax = plt.gca()
@@ -42,7 +44,7 @@ def ssi_by_image(test_values, true_values, lats, longs, plot_images=False):
         ax.set_ylim([0, 60])
         plt.axis('off')
         plt.savefig("images/truth.png", bbox_inches='tight', pad_inches=0)
-        plt.clf()
+        plt.close()
 
         # cv2 reads images as BGR by default, where as plt uses RGB format. So Blue and Red color will get flipped if not converted.
         test_img = cv2.imread("images/test.png")
