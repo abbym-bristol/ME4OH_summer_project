@@ -10,6 +10,7 @@ Python venv setup commands;
 - pip install geopandas
 - pip install tqdm
 - pip install celluloid  # to make animations
+- pip install opencv-python  # for SSI comparison
 
 # Data
 [TBC what data and stored where to let code work]
