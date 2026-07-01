@@ -66,7 +66,8 @@ def load_files():
     """
     # TODO: alter so either saves out reformatted version or loads that if it exists?
 
-    file_paths = [f for f in sorted(glob(os.path.join(NA_DATA_PATH, "*.csv")))]
+    # Drop final file path -> not a full week out from penultimate path.
+    file_paths = [f for f in sorted(glob(os.path.join(NA_DATA_PATH, "*.csv")))][:-1]
 
     sst_data = []
     dates = []
