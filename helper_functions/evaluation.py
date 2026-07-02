@@ -24,7 +24,7 @@ def ssi_by_image(test_values, true_values, lats, longs, plot_images=False):
     """
     
     ssi_images = []
-    for i in [0]:  # range(len(test_values)):
+    for i in range(len(test_values)):
         
         truth = true_values[i]
         test = test_values[i]
