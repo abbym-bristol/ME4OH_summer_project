@@ -87,8 +87,11 @@ def evaluate_reconstructions():
     results = {}
     for num_sensors in tqdm(quantities, "Evaluating reconstructions"):
         # Load data
-        test_recons = np.load(f"Reconstructions/change_num_sensors/recons_n{num_sensors}_l{lags}.npy")
-        test_ground_truth = np.load(f"Reconstructions/change_num_sensors/truth_n{num_sensors}_l{lags}.npy")
+        try:
+            test_recons = np.load(f"Reconstructions/change_num_sensors/recons_n{num_sensors}_l{lags}.npy")
+            test_ground_truth = np.load(f"Reconstructions/change_num_sensors/truth_n{num_sensors}_l{lags}.npy")
+        except FileNotFoundError:
+            break
 
         # Metrics for NA basin
         ssi = np.mean([SSI(test_ground_truth[i], test_recons[i], 
@@ -129,7 +132,6 @@ def evaluate_reconstructions():
         }
 
         results[num_sensors] = {"NA": NA_results, "GS": GS_results}
-        break
 
     with open("Reconstructions/change_num_sensors/eval_metric_results.json", 'w', encoding='utf-8') as f:
         json.dump(results, f, ensure_ascii=False, indent=4)
