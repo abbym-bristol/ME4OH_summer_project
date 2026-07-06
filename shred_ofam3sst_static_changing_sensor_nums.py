@@ -42,8 +42,13 @@ def train_models():
     val_transformed = sc.transform(val_data)
     test_transformed = sc.transform(test_data)
 
-    num_points = 60
-    quantities = range(1, len(lats), round(len(lats)/num_points))
+    # Version 1:
+    # num_points = 60
+    # quantities = range(1, len(lats), round(len(lats)/num_points))
+
+    # Version 2:
+    quantities = range(1, 200, 10)
+
     lags = 52
 
     for num_sensors in tqdm(quantities, "Training models"):
@@ -71,8 +76,8 @@ def train_models():
         print(np.linalg.norm(test_recons - test_ground_truth) / np.linalg.norm(test_ground_truth))
 
         # Save reconstruction
-        np.save(f"Reconstructions/change_num_sensors/recons_n{num_sensors}_l{lags}", test_recons)
-        np.save(f"Reconstructions/change_num_sensors/truth_n{num_sensors}_l{lags}", test_ground_truth)
+        np.save(f"Reconstructions/change_num_sensors/v2/recons_n{num_sensors}_l{lags}", test_recons)
+        np.save(f"Reconstructions/change_num_sensors/v2/truth_n{num_sensors}_l{lags}", test_ground_truth)
 
 
 def evaluate_reconstructions():
@@ -88,8 +93,8 @@ def evaluate_reconstructions():
     for num_sensors in tqdm(quantities, "Evaluating reconstructions"):
         # Load data
         try:
-            test_recons = np.load(f"Reconstructions/change_num_sensors/recons_n{num_sensors}_l{lags}.npy")
-            test_ground_truth = np.load(f"Reconstructions/change_num_sensors/truth_n{num_sensors}_l{lags}.npy")
+            test_recons = np.load(f"Reconstructions/change_num_sensors/v2/recons_n{num_sensors}_l{lags}.npy")
+            test_ground_truth = np.load(f"Reconstructions/change_num_sensors/v2/truth_n{num_sensors}_l{lags}.npy")
         except FileNotFoundError:
             break
 
@@ -133,7 +138,7 @@ def evaluate_reconstructions():
 
         results[num_sensors] = {"NA": NA_results, "GS": GS_results}
 
-    with open("Reconstructions/change_num_sensors/eval_metric_results.json", 'w', encoding='utf-8') as f:
+    with open("Reconstructions/change_num_sensors/v2/eval_metric_results.json", 'w', encoding='utf-8') as f:
         json.dump(results, f, ensure_ascii=False, indent=4)
 
 
