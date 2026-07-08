@@ -158,14 +158,24 @@ def lat_long_grid_square(lat, long, extent=0.25):
     return lats, longs
 
 
-def area_weighted_sst_mean(sst, lats, longs):
-    """...."""
+def area_weighted_mean(data, lats, longs):
+    """Weighted average of data, weighted by area on a spherical globe
+
+    Args:
+        data (array): data of shape (timesteps, len(lats)) which stores a particular value
+            (e.g. SST or OHC) for each grid square of the ME4OH full-field OFAM3 dataset
+        lats (numpy array): array of latitudes corresponding to the center of each grid square for which data is stored
+        longs (numpy array): array of longitudes corresponding to data values for each timestep for which data is stored
+
+    Return:
+        mean (array): weighted average of data, weighted by the area of each grid square using its latitude and longitude coordinates
+    """
     areas = []
     for i in range(len(lats)):
         lat_tuple, long_tuple = lat_long_grid_square(lats[i], longs[i])
         areas.append(area_rectangle_sphere(lat_tuple, long_tuple))
     areas = np.array(areas)
 
-    mean_sst = [np.sum(sst[i] * areas)/np.sum(areas) for i in range(len(sst))]
+    mean = [np.sum(d * areas)/np.sum(areas) for d in data]
 
-    return mean_sst
+    return mean
