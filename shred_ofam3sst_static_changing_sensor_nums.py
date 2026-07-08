@@ -47,7 +47,9 @@ def train_models():
     # quantities = range(1, len(lats), round(len(lats)/num_points))
 
     # Version 2:
-    quantities = range(1, 200, 10)
+    quantities = range(5, 205, 10)
+    print("Sensor quantities to train:")
+    [print(q) for q in quantities]
 
     lags = 52
 
@@ -85,8 +87,13 @@ def evaluate_reconstructions():
     # Load data
     _, _, lats, longs = load_files()
 
-    num_points = 60
-    quantities = range(1, len(lats), round(len(lats)/num_points))
+    # Version 1:
+    # num_points = 60
+    # quantities = range(1, len(lats), round(len(lats)/num_points))
+
+    # Version 2:
+    quantities = range(5, 205, 10)
+    
     lags = 52
 
     results = {}
