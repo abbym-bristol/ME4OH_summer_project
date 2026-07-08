@@ -122,3 +122,50 @@ def mask_array_by_lat_long(array, lats, longs, area="GS"):
     masked = array.copy()
     masked[:, ~valid_mask] = np.nan
     return masked
+
+
+def area_rectangle_sphere(lat_tuple, long_tuple, R=6367449):
+    """Determine the area of a rectangle defined using latitude and longitude (in degrees)
+    
+    Args:
+        lat_tuple (tuple): start and end latitudes (degrees) of the grid square (latitude 1, latitude 2)
+        long_tuple (tuple): start and end longitude (degrees) of the grid square (longitude 1, longitude 2)
+        R (float, radius): radius of earth, defaults to the average meridional radius (6,367,449m)
+
+    Returns:
+        area of the rectangle on a sphere, in meters squared
+    """
+
+    return (np.pi/180) * R**2 * (long_tuple[0]-long_tuple[1])*(np.sin(np.deg2rad(lat_tuple[0]))-np.sin(np.deg2rad(lat_tuple[1])))
+
+
+def lat_long_grid_square(lat, long, extent=0.25):
+    """Determine the extent a grid square of ME4OH data
+    
+    Args:
+        lat (float): midpoint latitude (degrees) of the grid square
+        long (float): midpoint longitude (degrees) of the grid square
+        extent (float): range of the grid square (i.e. ME4OH resolution)
+
+    Returns:
+        tuple (lats, longs) where
+            lats (tuple): start and end latitudes (degrees) of the grid square (latitude 1, latitude 2)
+            longs (tuple): start and end longitude (degrees) of the grid square (longitude 1, longitude 2)
+    """
+    lats = (lat-extent/2, lat+extent/2)
+    longs = (long-extent/2, long+extent/2)
+
+    return lats, longs
+
+
+def area_weighted_sst_mean(sst, lats, longs):
+    """...."""
+    areas = []
+    for i in range(len(lats)):
+        lat_tuple, long_tuple = lat_long_grid_square(lats[i], longs[i])
+        areas.append(area_rectangle_sphere(lat_tuple, long_tuple))
+    areas = np.array(areas)
+
+    mean_sst = [np.sum(sst[i] * areas)/np.sum(areas) for i in range(len(sst))]
+
+    return mean_sst
