@@ -261,3 +261,37 @@ def plot_compare_ff_insitu(ff_data, insitu_data, area="world", title=None):
     # plt.savefig(f"images/sst_comparison_{area}_map_{title}.png")
     plt.show()
     plt.close()
+
+
+def plot_sensors(sensor_coords, area="NA", background=True, title=None):
+    """Plot sensor locations on map
+
+    Args:
+        sensor_coords (tuple): tuple of arrays (longs[sensor_locations], lats[sensor_locations])
+            i.e. longitudes and latitudes at the sensor locations used for reconstructions.
+        area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin, default),
+            "GS" (Gulf stream region of NA basin), or "world" (whole globe).
+        background (bool, optional): whether to fill the plot with a blue background, defaults to True.
+        title (str, optional): title for the plot and name for saved figure. If None, no title used.
+
+    Returns:
+        Plot of sensor locations
+    """
+    if area=="world":
+        fig, ax = plt.subplots(figsize=(18, 9))
+    else:
+        fig, ax = plt.subplots(figsize=(12, 6))
+
+    ax.scatter(sensor_coords[0], sensor_coords[1], marker='.', c='k', s=2)
+
+    ax.set_xlabel('Longitude')
+    ax.set_ylabel('Latitude')
+    if background:
+        ax.set_facecolor("lightblue")
+
+    set_area(ax, area)
+
+    plt.title(title)
+    # plt.savefig(f"images/sst_{area}_map_{title}.png")
+    plt.show()
+    plt.close()

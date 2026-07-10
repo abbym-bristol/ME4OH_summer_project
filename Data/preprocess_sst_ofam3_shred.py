@@ -85,16 +85,18 @@ def load_files():
     return np.array(sst_data), np.array(dates), lats, longs
 
 
-def split_ordered_data(data, dates, train_frac=0.75):
+def split_ordered_data(data, dates, all_dates=False, train_frac=0.75):
     """Split ordered data into training, validation and test sets according to date
 
     Args:
         data (2D numpy array): 2D array of data to split of format [[values for time 1], [values for time 2], ...]
         dates (numpy array): array of dates for each time in data
+        all_dates (bool, optional): whether to return all the date arrays, if False only test_dates is returned.
         train_frac (float, optional): fraction of training data to use, defaults to 0.75.
 
     Returns:
         train, val, test (2D numpy arrays): train, val and test splits of data using ratio train_frac:(1-train_frac)/2:(1-train_frac)/2
+        train_dates, val_dates (numpy array, optional): arrays of dates for train and val sets; returned only if all_dates is True.
         test_dates (numpy array): array of dates for test set
     """
     if len(data) != len(dates):  # Sanity check
@@ -110,14 +112,18 @@ def split_ordered_data(data, dates, train_frac=0.75):
     val = data[n_train:n_train + n_val]
     test = data[n_train + n_val:]
 
-    # train_dates = dates[:n_train]
-    # val_dates = dates[n_train:n_train + n_val]
+    if all_dates: 
+        train_dates = dates[:n_train]
+        val_dates = dates[n_train:n_train + n_val]
     test_dates = dates[n_train + n_val:]
 
     if len(test) != n_test:  # Sanity check
         raise ValueError("Test data of wrong length")
 
-    return train, val, test, test_dates
+    if all_dates:
+        return train, val, test, train_dates, val_dates, test_dates
+    else:
+        return train, val, test, test_dates
 
 
 def create_shred_sequences(data, sensor_locs, lags=LAGS):

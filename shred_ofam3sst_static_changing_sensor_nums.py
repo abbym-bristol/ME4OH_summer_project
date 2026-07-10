@@ -8,6 +8,7 @@ Note: Assumptions as of 30/06/26
 """
 import argparse
 import json
+import os
 
 # Third-party imports
 import numpy as np
@@ -47,11 +48,18 @@ def train_models():
     # quantities = range(1, len(lats), round(len(lats)/num_points))
 
     # Version 2:
-    quantities = range(5, 205, 10)
+    # quantities = range(5, 205, 10)
+
+    # Version 3:
+    # quantities = range(5, 3005, 200)
+
+    # Version 4:
+    quantities = range(5, 3005, 200)
     print("Sensor quantities to train:")
     [print(q) for q in quantities]
 
     lags = 52
+    hidden_dim =  128 # v1-3: 64
 
     for num_sensors in tqdm(quantities, "Training models"):
         print("Number of sensors: ", num_sensors)
@@ -67,8 +75,8 @@ def train_models():
         # Train model
         print("Training model...")
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        shred = models.SHRED(num_sensors, len(lats), hidden_size=64, hidden_layers=2, l1=350, l2=400, dropout=0.1).to(device)
-        _ = models.fit(shred, train_dataset, val_dataset, batch_size=64, num_epochs=1000, lr=1e-3, patience=5)
+        shred = models.SHRED(num_sensors, len(lats), hidden_size=hidden_dim, hidden_layers=2, l1=350, l2=400, dropout=0.1).to(device)
+        _ = models.fit(shred, train_dataset, val_dataset, batch_size=hidden_dim, num_epochs=1000, lr=1e-3, patience=5)
 
         # Test model
         print("Testing ...")
@@ -78,8 +86,10 @@ def train_models():
         print(np.linalg.norm(test_recons - test_ground_truth) / np.linalg.norm(test_ground_truth))
 
         # Save reconstruction
-        np.save(f"Reconstructions/change_num_sensors/v2/recons_n{num_sensors}_l{lags}", test_recons)
-        np.save(f"Reconstructions/change_num_sensors/v2/truth_n{num_sensors}_l{lags}", test_ground_truth)
+        np.save(f"Reconstructions/change_num_sensors/v4/recons_n{num_sensors}_l{lags}", test_recons)
+        truth_file = f"Reconstructions/change_num_sensors/v4/truth_l{lags}"
+        if not os.path.isfile(truth_file):
+            np.save(truth_file, test_ground_truth)
 
 
 def evaluate_reconstructions():
@@ -92,7 +102,13 @@ def evaluate_reconstructions():
     # quantities = range(1, len(lats), round(len(lats)/num_points))
 
     # Version 2:
-    quantities = range(5, 205, 10)
+    # quantities = range(5, 205, 10)
+
+    # Version 3:
+    # quantities = range(5, 3005, 200)
+
+    # Version 4:
+    quantities = range(5, 3005, 200)
     
     lags = 52
 
@@ -100,8 +116,8 @@ def evaluate_reconstructions():
     for num_sensors in tqdm(quantities, "Evaluating reconstructions"):
         # Load data
         try:
-            test_recons = np.load(f"Reconstructions/change_num_sensors/v2/recons_n{num_sensors}_l{lags}.npy")
-            test_ground_truth = np.load(f"Reconstructions/change_num_sensors/v2/truth_n{num_sensors}_l{lags}.npy")
+            test_recons = np.load(f"Reconstructions/change_num_sensors/v4/recons_n{num_sensors}_l{lags}.npy")
+            test_ground_truth = np.load(f"Reconstructions/change_num_sensors/v4/truth_l{lags}.npy")
         except FileNotFoundError:
             break
 
@@ -145,7 +161,7 @@ def evaluate_reconstructions():
 
         results[num_sensors] = {"NA": NA_results, "GS": GS_results}
 
-    with open("Reconstructions/change_num_sensors/v2/eval_metric_results.json", 'w', encoding='utf-8') as f:
+    with open("Reconstructions/change_num_sensors/v4/eval_metric_results.json", 'w', encoding='utf-8') as f:
         json.dump(results, f, ensure_ascii=False, indent=4)
 
 
