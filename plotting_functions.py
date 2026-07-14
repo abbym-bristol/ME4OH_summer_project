@@ -282,7 +282,7 @@ def plot_sensors(sensor_coords, area="NA", background=True, title=None):
     else:
         fig, ax = plt.subplots(figsize=(12, 6))
 
-    ax.scatter(sensor_coords[0], sensor_coords[1], marker='.', c='k', s=2)
+    ax.scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k', s=4)
 
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
