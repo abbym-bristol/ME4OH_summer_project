@@ -1,3 +1,5 @@
+"""evaluation.py"""
+
 import os
 
 import cv2
@@ -7,7 +9,7 @@ from skimage.metrics import structural_similarity as SSI
 
 
 def ssi_by_image(test_values, true_values, lats, longs, plot_images=False):
-    """ Calculate SSI values for each test + true set of values
+    """Calculate SSI values for each test + true set of values
     Based on: https://stackoverflow.com/questions/71567315/how-to-get-the-ssim-comparison-score-between-two-images
 
     Args:
@@ -21,8 +23,7 @@ def ssi_by_image(test_values, true_values, lats, longs, plot_images=False):
     Returns:
         ssi_images (list): SSI values for each test/true pair.
         Optional: plots of images used, difference plot, and masked difference on the test image.
-    """
-    
+    """  # noqa: D205
     ssi_images = []
     for i in range(len(test_values)):
         
@@ -106,7 +107,7 @@ def mask_array_by_lat_long(array, lats, longs, area="GS"):
 
     Returns:
         masked (numpy array): copy of array with data outside of lat & long masked as NaN.
-    """
+    """  # noqa: D205
     if area == "GS":
         min_lat, max_lat = 30.0, 50.0
         min_long, max_long = -80.0, -30.0
@@ -135,7 +136,6 @@ def area_rectangle_sphere(lat_tuple, long_tuple, R=6367449):
     Returns:
         area of the rectangle on a sphere, in meters squared
     """
-
     return (np.pi/180) * R**2 * (long_tuple[0]-long_tuple[1])*(np.sin(np.deg2rad(lat_tuple[0]))-np.sin(np.deg2rad(lat_tuple[1])))
 
 
