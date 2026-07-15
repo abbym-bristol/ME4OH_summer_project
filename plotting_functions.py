@@ -1,5 +1,6 @@
 import geopandas as gpd
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.colors import Normalize
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -118,7 +119,7 @@ def plot_sst_map(data, title, min_sst, max_sst, area="world", background=False, 
     cbar.set_label('SST ($\\degree$C)')
 
     if sensor_coords is not None:
-        ax.scatter(sensor_coords[0], sensor_coords[1], marker='.', c='k')
+        ax.scatter(sensor_coords[0], sensor_coords[1], marker='.', c='k', s=1)
 
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
@@ -168,7 +169,7 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", diff_data=None,
     s = ax[0].scatter(recon_data.Longitude, recon_data.Latitude, c=recon_data.SST, s=1, cmap=cmap, norm=norm)
     ax[0].set_title('Reconstructed SST ($\\degree$C)')
     if sensor_coords is not None:
-        ax[0].scatter(sensor_coords[0], sensor_coords[1], marker='.', c='k')
+        ax[0].scatter(sensor_coords[0], sensor_coords[1], marker='.', c='k', s=1)
     if diff_data is not None:
         cax = make_axes_locatable(ax[0]).append_axes('right', size='5%', pad=0.1)
         cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm)
@@ -186,12 +187,14 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", diff_data=None,
     
     # Difference subfigure
     if diff_data is not None:
-        norm_diff = Normalize(vmin=-5, vmax=5)
+        # Set colour bar so white always at 0 degrees difference
+        extent=max(np.abs(min(diff_data.SST)), max(diff_data.SST))
+        norm_diff = Normalize(vmin=-extent, vmax=extent)
         cmap_diff = 'bwr'
         s = ax[2].scatter(diff_data.Longitude, diff_data.Latitude, c=diff_data.SST, s=1, cmap=cmap_diff, norm=norm_diff)
         ax[2].set_title('Difference ($\\degree$C)')
         cax = make_axes_locatable(ax[2]).append_axes('right', size='5%', pad=0.1)
-        cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm)
+        cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm_diff)
 
     # Style
     for a in ax:
@@ -256,5 +259,39 @@ def plot_compare_ff_insitu(ff_data, insitu_data, area="world", title=None):
     if title is not None:
         fig.suptitle(title)
     # plt.savefig(f"images/sst_comparison_{area}_map_{title}.png")
+    plt.show()
+    plt.close()
+
+
+def plot_sensors(sensor_coords, area="NA", background=True, title=None):
+    """Plot sensor locations on map
+
+    Args:
+        sensor_coords (tuple): tuple of arrays (longs[sensor_locations], lats[sensor_locations])
+            i.e. longitudes and latitudes at the sensor locations used for reconstructions.
+        area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin, default),
+            "GS" (Gulf stream region of NA basin), or "world" (whole globe).
+        background (bool, optional): whether to fill the plot with a blue background, defaults to True.
+        title (str, optional): title for the plot and name for saved figure. If None, no title used.
+
+    Returns:
+        Plot of sensor locations
+    """
+    if area=="world":
+        fig, ax = plt.subplots(figsize=(18, 9))
+    else:
+        fig, ax = plt.subplots(figsize=(12, 6))
+
+    ax.scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k', s=4)
+
+    ax.set_xlabel('Longitude')
+    ax.set_ylabel('Latitude')
+    if background:
+        ax.set_facecolor("lightblue")
+
+    set_area(ax, area)
+
+    plt.title(title)
+    # plt.savefig(f"images/sst_{area}_map_{title}.png")
     plt.show()
     plt.close()

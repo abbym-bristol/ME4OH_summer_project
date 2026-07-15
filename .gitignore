@@ -215,3 +215,4 @@ Data/*/
 images/
 models.py
 *.npy
+*.json
