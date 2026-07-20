@@ -1,13 +1,18 @@
+"""evaluation.py"""
+
 import os
 
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from pyproj import Geod
+from shapely.geometry import Polygon
 from skimage.metrics import structural_similarity as SSI
 
+# from shapely.plotting import plot_polygon
 
 def ssi_by_image(test_values, true_values, lats, longs, plot_images=False):
-    """ Calculate SSI values for each test + true set of values
+    """Calculate SSI values for each test + true set of values
     Based on: https://stackoverflow.com/questions/71567315/how-to-get-the-ssim-comparison-score-between-two-images
 
     Args:
@@ -21,8 +26,7 @@ def ssi_by_image(test_values, true_values, lats, longs, plot_images=False):
     Returns:
         ssi_images (list): SSI values for each test/true pair.
         Optional: plots of images used, difference plot, and masked difference on the test image.
-    """
-    
+    """  # noqa: D205
     ssi_images = []
     for i in range(len(test_values)):
         
@@ -106,7 +110,7 @@ def mask_array_by_lat_long(array, lats, longs, area="GS"):
 
     Returns:
         masked (numpy array): copy of array with data outside of lat & long masked as NaN.
-    """
+    """  # noqa: D205
     if area == "GS":
         min_lat, max_lat = 30.0, 50.0
         min_long, max_long = -80.0, -30.0
@@ -135,7 +139,6 @@ def area_rectangle_sphere(lat_tuple, long_tuple, R=6367449):
     Returns:
         area of the rectangle on a sphere, in meters squared
     """
-
     return (np.pi/180) * R**2 * (long_tuple[0]-long_tuple[1])*(np.sin(np.deg2rad(lat_tuple[0]))-np.sin(np.deg2rad(lat_tuple[1])))
 
 
@@ -158,8 +161,10 @@ def lat_long_grid_square(lat, long, extent=0.25):
     return lats, longs
 
 
-def area_weighted_mean(data, lats, longs):
+def area_weighted_mean_eqn(data, lats, longs):
     """Weighted average of data, weighted by area on a spherical globe
+    
+    Calculated using equation in area_rectangle_sphere()
 
     Args:
         data (array): data of shape (timesteps, len(lats)) which stores a particular value
@@ -178,4 +183,57 @@ def area_weighted_mean(data, lats, longs):
 
     mean = [np.sum(d * areas)/np.sum(areas) for d in data]
 
-    return mean
+    return mean, areas
+
+
+def grid_square_coords(lat, long, extent=0.25):
+    """Determine the coordinates of a grid square of ME4OH data
+    
+    Args:
+        lat (float): midpoint latitude (degrees) of the grid square
+        long (float): midpoint longitude (degrees) of the grid square
+        extent (float): range of the grid square (i.e. ME4OH resolution)
+
+    Returns:
+        coords (list): coordinates in lattude and longitude of the four corners of the grid square
+    """
+    lat_min = lat-extent/2
+    lat_max = lat+extent/2
+    long_min = long-extent/2
+    long_max = long+extent/2
+    coords = [(long_min, lat_min), (long_max, lat_min), (long_max, lat_max), (long_min, lat_max)]
+
+    return coords
+
+
+def area_weighted_mean(data, lats, longs):
+    """Average of data, weighted by area of each grid square on the globe
+
+    Notes: https://pyproj4.github.io/pyproj/stable/api/geod.html
+    - only works with areas up to half the size of the globe ;
+    - certain large polygons may return negative values.
+    - lats should be in the range [-90 deg, 90 deg]
+
+    Args:
+        data (array): data of shape (timesteps, len(lats)) which stores a particular value
+            (e.g. SST or OHC) for each grid square of the ME4OH full-field OFAM3 dataset
+        lats (numpy array): array of latitudes corresponding to the center of each grid square for which data is stored
+        longs (numpy array): array of longitudes corresponding to data values for each timestep for which data is stored
+
+    Return:
+        mean (array): weighted average of data, weighted by the area of each grid square using its latitude and longitude coordinates
+    """
+    areas = []
+    for lat, long in zip(lats, longs):
+        coords = grid_square_coords(lat, long)
+        poly = Polygon(coords)
+        # plot_polygon(poly)
+        # plt.show()
+        geod = Geod(ellps="WGS84")
+        area_m2, _ = geod.geometry_area_perimeter(poly)
+        areas.append(area_m2)
+    
+    areas = np.array(areas)
+    mean = [np.sum(d * areas)/np.sum(areas) for d in data]
+
+    return mean, areas

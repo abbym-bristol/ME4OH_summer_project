@@ -1,3 +1,5 @@
+"""plotting_functions.py"""
+
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -153,7 +155,7 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", diff_data=None,
 
     Returns:
         Plot of OHC map, saved figure.
-    """
+    """  # noqa: D205
     if diff_data is not None:
         fig, ax = plt.subplots(1, 3, figsize=(18, 9))
     else:
@@ -224,7 +226,7 @@ def plot_compare_ff_insitu(ff_data, insitu_data, area="world", title=None):
 
     Returns:
         Plot of OHC map, saved figure.
-    """
+    """  # noqa: D205
     fig, ax = plt.subplots(1, 2, figsize=(18, 9))
 
     # Create a shared normalization object for SST plots

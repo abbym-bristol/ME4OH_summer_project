@@ -22,20 +22,20 @@ np.random.seed(42)
 
 
 class TimeSeriesDataset(torch.utils.data.Dataset):
-    '''Takes input sequence of sensor measurements with shape (batch size, lags, num_sensors)
+    """Takes input sequence of sensor measurements with shape (batch size, lags, num_sensors)
     and corresponding measurements of high-dimensional state, return Torch dataset
     
     Origin: https://github.com/Jan-Williams/pyshred/blob/main/processdata.py
-    '''
-    def __init__(self, X, Y):
+    """  # noqa: D205
+    def __init__(self, X, Y):  # noqa: D107
         self.X = X
         self.Y = Y
         self.len = X.shape[0]
         
-    def __getitem__(self, index):
+    def __getitem__(self, index):  # noqa: D105
         return self.X[index], self.Y[index]
     
-    def __len__(self):
+    def __len__(self):  # noqa: D105
         return self.len
 
 
@@ -63,7 +63,7 @@ def load_files():
         dates (numpy array): array of dates for each time in dataset (from filenames)
         lats (numpy array): array of latitudes corresponding to SST values
         longs (numpy array): array of longitudes corresponding to SST values
-    """
+    """  # noqa: D205
     # TODO: alter so either saves out reformatted version or loads that if it exists?
 
     # Drop final file path -> not a full week out from penultimate path.

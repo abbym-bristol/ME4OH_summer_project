@@ -21,7 +21,8 @@ FILE_PATH = "Data/OFAM3/temp_ofam3_7d_197901-201412.0p25x0p25.nc"
 NA_DATA_PATH = "Data/OFAM3/NA/"
 
 def load_data():
-    """ Load the data from the NetCDF file
+    """Load the data from the NetCDF file
+
     Args:
         None
 
@@ -48,8 +49,8 @@ def load_data():
 
 
 def process_sst_data(temps, dates, lats, longs):
-    """ Iterates through temps array to build DataFrames for each timestamp, of the lat, long and SST values.
-    Preprocesses this to change the Longitude coordinates ready for geopandas plotting and to filter to the NA basin
+    """Iterate through temps array to build DataFrames for each timestamp, of the lat, long and SST values.
+    Preprocesses this to change the Longitude coordinates ready for geopandas plotting and to filter to the NA basin.
 
     Args:
         temps (array): array with shape (len(dates), 1, len(lats), len(longs)) containing all the SST measurements
@@ -59,7 +60,7 @@ def process_sst_data(temps, dates, lats, longs):
 
     Returns:
         None
-    """
+    """  # noqa: D205
     for k in tqdm(range(len(dates))):
         sst_array = []
         lat_array = []
