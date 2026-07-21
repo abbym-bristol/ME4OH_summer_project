@@ -131,7 +131,7 @@ def create_shred_sequences(data, sensor_locs, lags=LAGS):
 
     Args:
         data (2D numpy array): 2D array of data to split of format [[values for time 1], [values for time 2], ...]
-        sensor_locs (list): indexes corresponding to the shape of the values for time t in data that indicate the sensor locations to use for the model
+        sensor_locs (numpy array): indexes corresponding to the shape of the values for time t in data that indicate the sensor locations to use for the model
         lags (int, optional): number of weeks in each sequence, defaults to LAGS (52)
 
     Returns:
