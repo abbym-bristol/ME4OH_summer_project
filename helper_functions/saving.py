@@ -36,9 +36,10 @@ def unpack_metadata(metadata_file):
     with open(metadata_file, 'r', encoding='utf-8') as f:
         metadata = json.load(f)
 
-    sensor_locations = np.array(metadata['sensor_locations'])
-    sensor_coords = np.array(metadata['sensor_coords'])
-    test_lag_dates = np.array([date.fromisoformat(s) 
-                               for s in metadata['test_lag_dates']])
+    for k, v in metadata.items():
+        if "date" in k:
+            metadata[k] = np.array([date.fromisoformat(string) for string in metadata[k]])
+        else:
+            metadata[k] = np.array(v)
 
-    return sensor_locations, sensor_coords, test_lag_dates
+    return tuple(metadata.values())
