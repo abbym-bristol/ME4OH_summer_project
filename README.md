@@ -3,15 +3,26 @@ Foundation year summer project using data from [MapEval4OceanHeat](https://data.
 
 
 # Set up
-brew install ffmpeg
+brew install ffmpeg  # on mac
 
-Python venv setup commands;
-- pip install netCDF4
-- pip install geopandas
-- pip install tqdm
-- pip install celluloid  # to make animations
-- pip install opencv-python  # for SSI comparison
-- pip install mpl-scatter-density  # for density-coloured scatter plot
+Within a virtual environment created for the project:
+pip install -r requirements.txt
+
+If that doesn't work, the environment can be set up using:
+- `pip install netCDF4`
+- `pip install geopandas`
+- `pip install tqdm`
+- `pip install torch`
+- `pip install numpy`
+- `pip install matplotlib`
+- `pip install pandas`
+- `pip install scikit-learn`
+- `pip install scipy`
+- `pip install scikit-image`
+- `pip install celluloid`  # to make animations
+- `pip install ffmpeg`  # also for animations, may not be needed if installed with brew
+- `pip install opencv-python`  # for SSI comparison
+- `pip install mpl-scatter-density`  # for density-coloured scatter plot
 
 # Data
 [TBC what data and stored where to let code work]
