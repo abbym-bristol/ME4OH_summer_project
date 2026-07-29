@@ -25,20 +25,20 @@ from tqdm import tqdm
 # Local imports
 import models  # https://github.com/Jan-Williams/pyshred/blob/main/models.py 
 from Data.preprocess_sst_ofam3_shred import (
+    NA_DATA_PATH,
     convert_to_anomaly,
     create_shred_sequences,
     load_files,
     split_ordered_data,
 )
-from helper_functions.evaluation import mask_array_by_lat_long
+from helper_functions.evaluation import get_lats_longs, mask_array_by_lat_long
 from helper_functions.saving import JsonEncoder
 
 np.random.seed(42)
 
 
 def train_models(start_sensors, end_sensors, step, version,
-                 anomaly=False, seq_model="LSTM", file_path="Reconstructions/change_num_sensors/", hidden_dim=64,
-                 lags=52
+                 anomaly, seq_model, file_path, hidden_dim, lags
                 ):
     """Load data and train models with varying numbers of static sensors placed randomly"""
     # Load and reformat data
@@ -112,7 +112,7 @@ def evaluate_reconstructions(start_sensors, end_sensors, step, version,
                              file_path, lags):
     """Load data and train models with varying numbers of static sensors placed randomly"""
     # Load data
-    _, _, lats, longs = load_files()
+    lats, longs = get_lats_longs(NA_DATA_PATH)
 
     quantities = range(start_sensors, end_sensors+step, step)
 
@@ -170,34 +170,34 @@ def evaluate_reconstructions(start_sensors, end_sensors, step, version,
     with open(f"{file_path}/{version}/eval_metric_results.json", 'w', encoding='utf-8') as f:
         json.dump(results, f, ensure_ascii=False, indent=4)
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    # Required (standard)
+    parser.add_argument("start_sensors", help="Starting number of sensors", type=int)
+    parser.add_argument("end_sensors", help="Final number of sensors", type=int)
+    parser.add_argument("step_sensors", help="Step interval for number of sensors", type=int)
+    parser.add_argument("version", help="Version indicator (str) for saving")
 
-parser = argparse.ArgumentParser()
-# Required (standard)
-parser.add_argument("start_sensors", help="Starting number of sensors", type=int)
-parser.add_argument("end_sensors", help="Final number of sensors", type=int)
-parser.add_argument("step_sensors", help="Step interval for number of sensors", type=int)
-parser.add_argument("version", help="Version indicator (str) for saving")
+    # Optional - Bool flags
+    parser.add_argument("-a", "--anomaly", action="store_true", help="Use anomalies to train if this flag is used")
+    parser.add_argument("-e", "--eval", action="store_true", help="Evaluate reconstructions if this flag is used")
+    parser.add_argument("-t", "--train", action="store_true", help="Train models if this flag is used")
 
-# Optional - Bool flags
-parser.add_argument("-a", "--anomaly", action="store_true", help="Use anomalies to train if this flag is used")
-parser.add_argument("-e", "--eval", action="store_true", help="Evaluate reconstructions if this flag is used")
-parser.add_argument("-t", "--train", action="store_true", help="Train models if this flag is used")
+    # Optional - defaults set
+    parser.add_argument("-f", "--filepath", help="File path to save results under",
+                        default="Reconstructions/change_num_sensors/")
+    parser.add_argument("-d", "--hiddendim", help="Hidden dimension for sequence model", type=int, default=64)
+    parser.add_argument("-s", "--sequence", help="Sequence model to use", default="LSTM")
+    parser.add_argument("-l", "--lags", help="Lags (sequence length in weeks)", default=52)
 
-# Optional - defaults set
-parser.add_argument("-f", "--filepath", help="File path to save results under",
-                    default="Reconstructions/change_num_sensors/")
-parser.add_argument("-h", "--hiddendim", help="Hidden dimension for sequence model", type=int, default=64)
-parser.add_argument("-s", "--sequence", help="Sequence model to use", default="LSTM")
-parser.add_argument("-l", "--lags", help="Lags (sequence length in weeks)", default=52)
+    args = parser.parse_args()
 
-args = parser.parse_args()
-
-if args.train:
-    print("Mode: Train models")
-    train_models(anomaly=args.anomaly, file_path=args.filepath, seq_model=args.sequence,
-                 start_sensors=args.start_sensors, end_sensors=args.end_sensors, step=args.step_sensors,
-                 version=args.version)
-if args.eval:
-    print("Mode: Evaluate reconstructions")
-    evaluate_reconstructions(start_sensors=args.start_sensors, end_sensors=args.end_sensors, step=args.step_sensors,
-                             file_path=args.filepath, version=args.version)
+    if args.train:
+        print("Mode: Train models")
+        train_models(anomaly=args.anomaly, file_path=args.filepath, seq_model=args.sequence,
+                    start_sensors=args.start_sensors, end_sensors=args.end_sensors, step=args.step_sensors,
+                    version=args.version)
+    if args.eval:
+        print("Mode: Evaluate reconstructions")
+        evaluate_reconstructions(start_sensors=args.start_sensors, end_sensors=args.end_sensors, step=args.step_sensors,
+                                file_path=args.filepath, version=args.version, lags=args.lags)
