@@ -140,7 +140,7 @@ def plot_sst_map(data, area="world", background=False, cmap='plasma', min_sst=No
     plt.close()
 
 
-def plot_compare_sst_recon(recon_data, truth_data, area="world", diff_data=None, sensor_coords=None, title=None):
+def plot_compare_sst_recon(recon_data, truth_data, area="world", cmap="plasma", diff_data=None, sensor_coords=None, title=None):
     """For a given subset of data, plot the SST map over a set area of the ocean for either reconstruction and ground truth,
     or reconstruction, ground truth and difference between the two.
 
@@ -151,6 +151,7 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", diff_data=None,
             latitude, longitude and SST (ground truth).
         area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin),
             "GS" (Gulf stream region of NA basin), or "world" (whole globe, default).
+        cmap (str or plt colormap, optional): colourmap to use for figure, defaults to "plasma".
         diff_data (df or df.groupby object, optional): dataframe (or df.groupby object of a dataframe) containing columns for
             latitude, longitude and SST (difference between recon_data and truth_data values). If None, difference is not plotted.
         sensor_coords (tuple): tuple of arrays (longs[sensor_locations], lats[sensor_locations])
@@ -169,7 +170,6 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", diff_data=None,
     min_sst = min([min(recon_data.SST), min(truth_data.SST)])
     max_sst = max([max(recon_data.SST), max(truth_data.SST)])
     norm = Normalize(vmin=min_sst, vmax=max_sst)
-    cmap = 'plasma'
 
     # Reconstruction subfigure
     s = ax[0].scatter(recon_data.Longitude, recon_data.Latitude, c=recon_data.SST, s=1, cmap=cmap, norm=norm)
