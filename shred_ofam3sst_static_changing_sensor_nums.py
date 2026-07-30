@@ -74,7 +74,7 @@ def train_models(anomaly, file_path, hidden_dim, lags, seq_model, version, quant
         val_dataset = create_shred_sequences(val_transformed, sensor_locations, lags=lags)
         test_dataset = create_shred_sequences(test_transformed, sensor_locations, lags=lags)
 
-        # Train model
+        # # Train model
         print("Training model...")
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         shred = models.SHRED(num_sensors, len(lats), hidden_size=hidden_dim, seq_model=seq_model,
@@ -90,8 +90,9 @@ def train_models(anomaly, file_path, hidden_dim, lags, seq_model, version, quant
 
         # Save reconstruction
         np.save(f"{directory}/recons_n{num_sensors}_l{lags}", test_recons)
+        
         truth_file = f"{directory}/truth_l{lags}"
-        if not os.path.isfile(truth_file):
+        if not os.path.isfile(truth_file):  # only save the first time
             np.save(truth_file, test_ground_truth)
 
         # Save metadata
@@ -116,7 +117,8 @@ def evaluate_reconstructions(file_path, lags, version, quantities):
         try:
             test_recons = np.load(f"{file_path}/{version}/recons_n{num_sensors}_l{lags}.npy")
             test_ground_truth = np.load(f"{file_path}/{version}/truth_l{lags}.npy")
-        except FileNotFoundError:
+        except FileNotFoundError as err:
+            print(err)
             break
 
         # Metrics for NA basin
@@ -129,8 +131,12 @@ def evaluate_reconstructions(file_path, lags, version, quantities):
         avg_difference = [np.mean(d) for d in difference]
         avg_all_time_difference = float(np.mean(avg_difference))
 
+        mse = MSE(y_pred=test_recons, y_true=test_ground_truth)
+
         NA_results = {
-            "RMSE": np.sqrt(MSE(y_pred=test_recons, y_true=test_ground_truth)),
+            "RMSE": np.sqrt(mse),
+            "MSE": mse,
+            "NMSE": mse/np.mean(test_ground_truth)**2,
             "MAE": MAE(y_pred=test_recons, y_true=test_ground_truth),
             "R2": r2_score(y_pred=test_recons, y_true=test_ground_truth),
             "Average SSI": ssi,
@@ -151,8 +157,12 @@ def evaluate_reconstructions(file_path, lags, version, quantities):
         gs_avg_difference = [np.mean(d) for d in GS_data]
         gs_avg_all_time_difference = float(np.mean(gs_avg_difference))
 
+        mse = MSE(y_pred=GS_test_data, y_true=GS_truth_data)
+        
         GS_results = {
-            "RMSE": np.sqrt(MSE(y_pred=GS_test_data, y_true=GS_truth_data)),
+            "RMSE": np.sqrt(mse),
+            "MSE": mse,
+            "NMSE": mse/np.mean(test_ground_truth)**2,
             "MAE": MAE(y_pred=GS_test_data, y_true=GS_truth_data),
             "R2": r2_score(y_pred=GS_test_data, y_true=GS_truth_data),
             "Average SSI": ssi,
@@ -162,7 +172,7 @@ def evaluate_reconstructions(file_path, lags, version, quantities):
         results[num_sensors] = {"NA": NA_results, "GS": GS_results}
 
     with open(f"{file_path}/{version}/eval_metric_results.json", 'w', encoding='utf-8') as f:
-        json.dump(results, f, ensure_ascii=False, indent=4)
+        json.dump(results, f, ensure_ascii=False, indent=4, cls=JsonEncoder)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
