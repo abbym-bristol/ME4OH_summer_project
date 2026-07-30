@@ -37,9 +37,7 @@ from helper_functions.saving import JsonEncoder
 np.random.seed(42)
 
 
-def train_models(start_sensors, end_sensors, step, version,
-                 anomaly, seq_model, file_path, hidden_dim, lags
-                ):
+def train_models(anomaly, file_path, hidden_dim, lags, seq_model, version, quantities):
     """Load data and train models with varying numbers of static sensors placed randomly"""
     # Load and reformat data
     data, dates, lats, longs = load_files()
@@ -57,7 +55,6 @@ def train_models(start_sensors, end_sensors, step, version,
     val_transformed = sc.transform(val_data)
     test_transformed = sc.transform(test_data)
 
-    quantities = range(start_sensors, end_sensors+step, step)
     print("Sensor quantities to train:")
     [print(q) for q in quantities]
 
@@ -108,13 +105,10 @@ def train_models(start_sensors, end_sensors, step, version,
         with open(f"{directory}/metadata_n{num_sensors}_l{lags}.json", 'w', encoding='utf-8') as f:
             json.dump(metadata, f, cls=JsonEncoder)
 
-def evaluate_reconstructions(start_sensors, end_sensors, step, version,
-                             file_path, lags):
+def evaluate_reconstructions(file_path, lags, version, quantities):
     """Load data and train models with varying numbers of static sensors placed randomly"""
     # Load data
     lats, longs = get_lats_longs(NA_DATA_PATH)
-
-    quantities = range(start_sensors, end_sensors+step, step)
 
     results = {}
     for num_sensors in tqdm(quantities, "Evaluating reconstructions"):
@@ -192,12 +186,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    quantities = range(args.start_sensors, args.end_sensors+args.step_sensors, args.step_sensors)
+
     if args.train:
         print("Mode: Train models")
-        train_models(anomaly=args.anomaly, file_path=args.filepath, seq_model=args.sequence,
-                    start_sensors=args.start_sensors, end_sensors=args.end_sensors, step=args.step_sensors,
-                    version=args.version, lags=args.lags, hidden_dim=args.hiddendim)
+        train_models(anomaly=args.anomaly, file_path=args.filepath, hidden_dim=args.hiddendim,
+                    lags=args.lags, seq_model=args.sequence, version=args.version, quantities=quantities)
     if args.eval:
         print("Mode: Evaluate reconstructions")
-        evaluate_reconstructions(start_sensors=args.start_sensors, end_sensors=args.end_sensors, step=args.step_sensors,
-                                file_path=args.filepath, version=args.version, lags=args.lags)
+        evaluate_reconstructions(file_path=args.filepath, lags=args.lags, version=args.version, quantities=quantities)
