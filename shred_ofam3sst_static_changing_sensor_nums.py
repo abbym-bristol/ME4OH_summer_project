@@ -25,22 +25,28 @@ from tqdm import tqdm
 # Local imports
 import models  # https://github.com/Jan-Williams/pyshred/blob/main/models.py 
 from Data.preprocess_sst_ofam3_shred import (
+    NA_DATA_PATH,
+    convert_to_anomaly,
     create_shred_sequences,
     load_files,
     split_ordered_data,
 )
-from helper_functions.evaluation import mask_array_by_lat_long
+from helper_functions.evaluation import get_lats_longs, mask_array_by_lat_long
+from helper_functions.saving import JsonEncoder
 
 np.random.seed(42)
 
 
-def train_models():
+def train_models(anomaly, file_path, hidden_dim, lags, seq_model, version, quantities):
     """Load data and train models with varying numbers of static sensors placed randomly"""
     # Load and reformat data
     data, dates, lats, longs = load_files()
 
     print("Preprocessing data...")
     train_data, val_data, test_data, test_dates = split_ordered_data(data, dates)
+
+    if anomaly:
+        train_data, val_data, test_data, bulk_mean = convert_to_anomaly((train_data, val_data, test_data))
 
     # Normalise data
     sc = MinMaxScaler()
@@ -49,24 +55,14 @@ def train_models():
     val_transformed = sc.transform(val_data)
     test_transformed = sc.transform(test_data)
 
-    # Version 1:
-    # num_points = 60
-    # quantities = range(1, len(lats), round(len(lats)/num_points))
-
-    # Version 2:
-    # quantities = range(5, 205, 10)
-
-    # Version 3:
-    # quantities = range(5, 3005, 200)
-
-    # Version 4:
-    quantities = range(5, 3005, 200)
     print("Sensor quantities to train:")
     [print(q) for q in quantities]
 
-    lags = 52
-    hidden_dim =  128 # v1-3: 64
+    # Make experiment folder
+    directory = os.path.join(file_path, version)
+    os.makedirs(directory, exist_ok = True)
 
+    # Train models
     for num_sensors in tqdm(quantities, "Training models"):
         print("Number of sensors: ", num_sensors)
         # Get sensor locations
@@ -78,10 +74,10 @@ def train_models():
         val_dataset = create_shred_sequences(val_transformed, sensor_locations, lags=lags)
         test_dataset = create_shred_sequences(test_transformed, sensor_locations, lags=lags)
 
-        # Train model
+        # # Train model
         print("Training model...")
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        shred = models.SHRED(num_sensors, len(lats), hidden_size=hidden_dim,
+        shred = models.SHRED(num_sensors, len(lats), hidden_size=hidden_dim, seq_model=seq_model,
                              hidden_layers=2, l1=350, l2=400, dropout=0.1).to(device)
         _ = models.fit(shred, train_dataset, val_dataset, batch_size=hidden_dim, num_epochs=1000, lr=1e-3, patience=5)
 
@@ -93,39 +89,36 @@ def train_models():
         print(np.linalg.norm(test_recons - test_ground_truth) / np.linalg.norm(test_ground_truth))
 
         # Save reconstruction
-        np.save(f"Reconstructions/change_num_sensors/v4/recons_n{num_sensors}_l{lags}", test_recons)
-        truth_file = f"Reconstructions/change_num_sensors/v4/truth_l{lags}"
-        if not os.path.isfile(truth_file):
+        np.save(f"{directory}/recons_n{num_sensors}_l{lags}", test_recons)
+        
+        truth_file = f"{directory}/truth_l{lags}"
+        if not os.path.isfile(truth_file):  # only save the first time
             np.save(truth_file, test_ground_truth)
 
+        # Save metadata
+        metadata = {
+            "sensor_locations": list(sensor_locations),
+            "test_lag_dates": list(test_dates),
+            }
+        if anomaly:
+            metadata["bulk_mean"] = bulk_mean
+    
+        with open(f"{directory}/metadata_n{num_sensors}_l{lags}.json", 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, cls=JsonEncoder)
 
-def evaluate_reconstructions():
+def evaluate_reconstructions(file_path, lags, version, quantities):
     """Load data and train models with varying numbers of static sensors placed randomly"""
     # Load data
-    _, _, lats, longs = load_files()
-
-    # Version 1:
-    # num_points = 60
-    # quantities = range(1, len(lats), round(len(lats)/num_points))
-
-    # Version 2:
-    # quantities = range(5, 205, 10)
-
-    # Version 3:
-    # quantities = range(5, 3005, 200)
-
-    # Version 4:
-    quantities = range(5, 3005, 200)
-    
-    lags = 52
+    lats, longs = get_lats_longs(NA_DATA_PATH)
 
     results = {}
     for num_sensors in tqdm(quantities, "Evaluating reconstructions"):
         # Load data
         try:
-            test_recons = np.load(f"Reconstructions/change_num_sensors/v4/recons_n{num_sensors}_l{lags}.npy")
-            test_ground_truth = np.load(f"Reconstructions/change_num_sensors/v4/truth_l{lags}.npy")
-        except FileNotFoundError:
+            test_recons = np.load(f"{file_path}/{version}/recons_n{num_sensors}_l{lags}.npy")
+            test_ground_truth = np.load(f"{file_path}/{version}/truth_l{lags}.npy")
+        except FileNotFoundError as err:
+            print(err)
             break
 
         # Metrics for NA basin
@@ -138,8 +131,12 @@ def evaluate_reconstructions():
         avg_difference = [np.mean(d) for d in difference]
         avg_all_time_difference = float(np.mean(avg_difference))
 
+        mse = MSE(y_pred=test_recons, y_true=test_ground_truth)
+
         NA_results = {
-            "RMSE": np.sqrt(MSE(y_pred=test_recons, y_true=test_ground_truth)),
+            "RMSE": np.sqrt(mse),
+            "MSE": mse,
+            "NMSE": mse/np.mean(test_ground_truth)**2,
             "MAE": MAE(y_pred=test_recons, y_true=test_ground_truth),
             "R2": r2_score(y_pred=test_recons, y_true=test_ground_truth),
             "Average SSI": ssi,
@@ -160,8 +157,12 @@ def evaluate_reconstructions():
         gs_avg_difference = [np.mean(d) for d in GS_data]
         gs_avg_all_time_difference = float(np.mean(gs_avg_difference))
 
+        mse = MSE(y_pred=GS_test_data, y_true=GS_truth_data)
+        
         GS_results = {
-            "RMSE": np.sqrt(MSE(y_pred=GS_test_data, y_true=GS_truth_data)),
+            "RMSE": np.sqrt(mse),
+            "MSE": mse,
+            "NMSE": mse/np.mean(test_ground_truth)**2,
             "MAE": MAE(y_pred=GS_test_data, y_true=GS_truth_data),
             "R2": r2_score(y_pred=GS_test_data, y_true=GS_truth_data),
             "Average SSI": ssi,
@@ -170,18 +171,37 @@ def evaluate_reconstructions():
 
         results[num_sensors] = {"NA": NA_results, "GS": GS_results}
 
-    with open("Reconstructions/change_num_sensors/v4/eval_metric_results.json", 'w', encoding='utf-8') as f:
-        json.dump(results, f, ensure_ascii=False, indent=4)
+    with open(f"{file_path}/{version}/eval_metric_results.json", 'w', encoding='utf-8') as f:
+        json.dump(results, f, ensure_ascii=False, indent=4, cls=JsonEncoder)
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    # Required (standard)
+    parser.add_argument("start_sensors", help="Starting number of sensors", type=int)
+    parser.add_argument("end_sensors", help="Final number of sensors", type=int)
+    parser.add_argument("step_sensors", help="Step interval for number of sensors", type=int)
+    parser.add_argument("version", help="Version indicator (str) for saving")
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--train", action="store_true", help="Train models if this flag is used")
-parser.add_argument("-e", "--eval", action="store_true", help="Evaluate reconstructions if this flag is used")
-args = parser.parse_args()
+    # Optional - Bool flags
+    parser.add_argument("-a", "--anomaly", action="store_true", help="Use anomalies to train if this flag is used")
+    parser.add_argument("-e", "--eval", action="store_true", help="Evaluate reconstructions if this flag is used")
+    parser.add_argument("-t", "--train", action="store_true", help="Train models if this flag is used")
 
-if args.train:
-    print("Mode: Train models")
-    train_models()
-if args.eval:
-    print("Mode: Evaluate reconstructions")
-    evaluate_reconstructions()
+    # Optional - defaults set
+    parser.add_argument("-f", "--filepath", help="File path to save results under",
+                        default="Reconstructions/change_num_sensors/")
+    parser.add_argument("-d", "--hiddendim", help="Hidden dimension for sequence model", type=int, default=64)
+    parser.add_argument("-s", "--sequence", help="Sequence model to use", default="LSTM")
+    parser.add_argument("-l", "--lags", help="Lags (sequence length in weeks)", default=52, type=int)
+
+    args = parser.parse_args()
+
+    quantities = range(args.start_sensors, args.end_sensors+args.step_sensors, args.step_sensors)
+
+    if args.train:
+        print("Mode: Train models")
+        train_models(anomaly=args.anomaly, file_path=args.filepath, hidden_dim=args.hiddendim,
+                    lags=args.lags, seq_model=args.sequence, version=args.version, quantities=quantities)
+    if args.eval:
+        print("Mode: Evaluate reconstructions")
+        evaluate_reconstructions(file_path=args.filepath, lags=args.lags, version=args.version, quantities=quantities)

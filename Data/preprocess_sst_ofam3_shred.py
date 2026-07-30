@@ -126,6 +126,31 @@ def split_ordered_data(data, dates, all_dates=False, train_frac=0.75):
         return train, val, test, test_dates
 
 
+def convert_to_anomaly(data):
+    """Convert data to anomalies by subtracting the bulk mean value for the training data
+
+    Args:
+        data (tuple): tuple of (train, validation, test) data to convert to anomalies
+
+    Returns:
+        train_anomaly (Numpy array): train dataset of anomaly values
+        val_anomaly (Numpy array): validation dataset of anomaly values
+        test_anomaly (Numpy array): test dataset of anomaly values
+        train_bulk_mean (Numpy array): bulk mean value of training data for each lat/long grid square
+    """
+    (train, val, test) = data
+
+    # For each week, get mean SST across all weeks for each lat/long grid point
+    train_bulk_mean = np.mean(train, axis=0)
+
+    # Calculate anomalies
+    train_anomaly = train - train_bulk_mean
+    val_anomaly = val - train_bulk_mean
+    test_anomaly = test - train_bulk_mean
+
+    return train_anomaly, val_anomaly, test_anomaly, train_bulk_mean
+
+
 def create_shred_sequences(data, sensor_locs, lags=LAGS):
     """Create sequences for input to the SHRED model
 
@@ -153,24 +178,24 @@ def create_shred_sequences(data, sensor_locs, lags=LAGS):
     return dataset
 
 
-if __name__ == "__main__":
-    # Load and reformat data
-    data, dates, lats, longs = load_files()
+# if __name__ == "__main__":
+#     # Load and reformat data
+#     data, dates, lats, longs = load_files()
 
-    print("Preprocessing data...")
-    train_data, val_data, test_data = split_ordered_data(data)
+#     print("Preprocessing data...")
+#     train_data, val_data, test_data = split_ordered_data(data)
 
-    # Normalise data
-    sc = MinMaxScaler()
-    sc = sc.fit(train_data)  # Computes min and max from training data only (prevent data leakage)
-    train_transformed = sc.transform(train_data)  
-    val_transformed = sc.transform(val_data)
-    test_transformed = sc.transform(test_data)
+#     # Normalise data
+#     sc = MinMaxScaler()
+#     sc = sc.fit(train_data)  # Computes min and max from training data only (prevent data leakage)
+#     train_transformed = sc.transform(train_data)  
+#     val_transformed = sc.transform(val_data)
+#     test_transformed = sc.transform(test_data)
 
-    # Build sequences
-    sensor_locations = np.random.choice(data.shape[1], size=NUM_SENSORS, replace=False)
-    print(f"Sensor location indexes will be: {sensor_locations}")
+#     # Build sequences
+#     sensor_locations = np.random.choice(data.shape[1], size=NUM_SENSORS, replace=False)
+#     print(f"Sensor location indexes will be: {sensor_locations}")
 
-    train_dataset = create_shred_sequences(train_transformed)
-    val_dataset = create_shred_sequences(val_transformed)
-    test_dataset = create_shred_sequences(test_transformed)
+#     train_dataset = create_shred_sequences(train_transformed)
+#     val_dataset = create_shred_sequences(val_transformed)
+#     test_dataset = create_shred_sequences(test_transformed)

@@ -86,21 +86,21 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, area="world"):
     plt.close()
 
 
-def plot_sst_map(data, title, min_sst, max_sst, area="world", background=False, cmap='plasma', sensor_coords=None):
+def plot_sst_map(data, area="world", background=False, cmap='plasma', min_sst=None, max_sst=None, sensor_coords=None, title=None):
     """For a given subset of data, plot the SST map over the world or filtered to a specific area of the ocean
     
     Args:
         data (df or df.groupby object): dataframe (or df.groupby object of a dataframe) containing columns for
             latitude, longitude and observed SST.
-        title (str): title for the plot and name for saved figure.
-        min_sst (float): minimum value across entire dataset (ensures uniform colourbar)
-        min_sst (float): maximum value across entire dataset (ensures uniform colourbar)
         area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin),
             "GS" (Gulf stream region of NA basin), or "world" (whole globe, default).
         cmap (str or plt colormap, optional): colourmap to use for figure, defaults to "plasma".
         background (bool, optional): whether to fill the plot with a blue background, defaults to False.
+        min_sst (float, optional): minimum value across entire dataset (ensures uniform colourbar)
+        min_sst (float, optional): maximum value across entire dataset (ensures uniform colourbar)
         sensor_coords (tuple): tuple of arrays (longs[sensor_locations], lats[sensor_locations])
             i.e. longitudes and latitudes at the sensor locations used for the reconstruction. If None, not plotted.
+        title (str, optional): title for the plot and name for saved figure.
 
     Returns:
         Plot of OHC map, saved figure.
@@ -111,6 +111,9 @@ def plot_sst_map(data, title, min_sst, max_sst, area="world", background=False, 
         fig, ax = plt.subplots(figsize=(12, 6))
 
     # Create a shared normalization object
+    if min_sst is None or max_sst is None:
+        min_sst = min(data.SST)
+        max_sst = max(data.SST)
     norm = Normalize(vmin=min_sst, vmax=max_sst)
     # cmap = plt.cm.plasma   # Define the colormap
 
@@ -130,13 +133,14 @@ def plot_sst_map(data, title, min_sst, max_sst, area="world", background=False, 
 
     set_area(ax, area)
 
-    plt.title(title)
-    # plt.savefig(f"images/sst_{area}_map_{title}.png")
+    if title is not None:
+        plt.title(title)
+        # plt.savefig(f"images/sst_{area}_map_{title}.png")
     plt.show()
     plt.close()
 
 
-def plot_compare_sst_recon(recon_data, truth_data, area="world", diff_data=None, sensor_coords=None, title=None):
+def plot_compare_sst_recon(recon_data, truth_data, area="world", cmap="plasma", diff_data=None, sensor_coords=None, title=None):
     """For a given subset of data, plot the SST map over a set area of the ocean for either reconstruction and ground truth,
     or reconstruction, ground truth and difference between the two.
 
@@ -147,6 +151,7 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", diff_data=None,
             latitude, longitude and SST (ground truth).
         area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin),
             "GS" (Gulf stream region of NA basin), or "world" (whole globe, default).
+        cmap (str or plt colormap, optional): colourmap to use for figure, defaults to "plasma".
         diff_data (df or df.groupby object, optional): dataframe (or df.groupby object of a dataframe) containing columns for
             latitude, longitude and SST (difference between recon_data and truth_data values). If None, difference is not plotted.
         sensor_coords (tuple): tuple of arrays (longs[sensor_locations], lats[sensor_locations])
@@ -165,7 +170,6 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", diff_data=None,
     min_sst = min([min(recon_data.SST), min(truth_data.SST)])
     max_sst = max([max(recon_data.SST), max(truth_data.SST)])
     norm = Normalize(vmin=min_sst, vmax=max_sst)
-    cmap = 'plasma'
 
     # Reconstruction subfigure
     s = ax[0].scatter(recon_data.Longitude, recon_data.Latitude, c=recon_data.SST, s=1, cmap=cmap, norm=norm)
