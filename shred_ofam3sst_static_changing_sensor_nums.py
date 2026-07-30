@@ -62,7 +62,7 @@ def train_models(start_sensors, end_sensors, step, version,
     [print(q) for q in quantities]
 
     # Make experiment folder
-    directory = f"{file_path}/{version}/"
+    directory = os.path.join(file_path, version)
     os.makedirs(directory, exist_ok = True)
 
     # Train models
@@ -188,7 +188,7 @@ if __name__ == "__main__":
                         default="Reconstructions/change_num_sensors/")
     parser.add_argument("-d", "--hiddendim", help="Hidden dimension for sequence model", type=int, default=64)
     parser.add_argument("-s", "--sequence", help="Sequence model to use", default="LSTM")
-    parser.add_argument("-l", "--lags", help="Lags (sequence length in weeks)", default=52)
+    parser.add_argument("-l", "--lags", help="Lags (sequence length in weeks)", default=52, type=int)
 
     args = parser.parse_args()
 
@@ -196,7 +196,7 @@ if __name__ == "__main__":
         print("Mode: Train models")
         train_models(anomaly=args.anomaly, file_path=args.filepath, seq_model=args.sequence,
                     start_sensors=args.start_sensors, end_sensors=args.end_sensors, step=args.step_sensors,
-                    version=args.version)
+                    version=args.version, lags=args.lags, hidden_dim=args.hiddendim)
     if args.eval:
         print("Mode: Evaluate reconstructions")
         evaluate_reconstructions(start_sensors=args.start_sensors, end_sensors=args.end_sensors, step=args.step_sensors,
