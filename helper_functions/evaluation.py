@@ -10,6 +10,9 @@ import pandas as pd
 from pyproj import Geod
 from shapely.geometry import Polygon
 from skimage.metrics import structural_similarity as SSI
+from sklearn.metrics import mean_absolute_error as MAE
+from sklearn.metrics import mean_squared_error as MSE
+from sklearn.metrics import r2_score
 from tqdm import tqdm
 
 # from shapely.plotting import plot_polygon
@@ -35,6 +38,34 @@ def get_lats_longs(data_path):
     longs = df.Longitude.to_numpy()
 
     return lats, longs
+
+
+def evaluate_metrics(y_pred, y_true):
+    """Calculate metrics from test reconstructions
+
+    Args:
+        y_pred (numpy array): predicted y (full-field) for each sequence in test set
+        y_true (numpy array): corresponding true y (full-field) for each sequence in test set
+
+    Returns:
+        None
+    """
+    mse = MSE(y_pred=y_pred, y_true=y_true)
+    rmse = np.sqrt(mse)
+    mae = MAE(y_pred=y_pred, y_true=y_true)
+    nmse = mse/np.mean(y_true)**2
+    r2 = r2_score(y_pred=y_pred, y_true=y_true)
+
+    print(f"RMSE:\t{rmse:.3f}")
+    print(f"MSE:\t{mse:.3f}")
+    print(f"NMSE:\t{nmse:.3f}")
+    print(f"MAE:\t{mae:.3f}")
+    print(f"R2:\t{r2:.3f}")
+
+    ssi = np.mean([SSI(y_true[i], y_pred[i], 
+                    data_range=(max(y_pred[i].max(), y_true[i].max()) - min(y_pred[i].min(), y_true[i].min())))
+                    for i in range(len(y_pred))])
+    print(f"Average SSI:\t{ssi:.3f}")
 
 
 def ssi_by_image(test_values, true_values, lats, longs, plot_images=False):
