@@ -213,6 +213,5 @@ Data/*/
 *venv/
 .DS_Store
 images/
-models.py
 *.npy
 *.json
