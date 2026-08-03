@@ -51,10 +51,17 @@ def evaluate_metrics(y_pred, y_true):
         None
     """
     mse = MSE(y_pred=y_pred, y_true=y_true)
+    assert np.isclose(mse, np.mean([MSE(y_pred=y_pred[i], y_true=y_true[i]) for i in range(len(y_pred))]))
+    
     rmse = np.sqrt(mse)
-    mae = MAE(y_pred=y_pred, y_true=y_true)
     nmse = mse/np.mean(y_true)**2
-    r2 = r2_score(y_pred=y_pred, y_true=y_true)
+
+    mae = MAE(y_pred=y_pred, y_true=y_true)
+    assert np.isclose(mae, np.mean([MAE(y_pred=y_pred[i], y_true=y_true[i]) for i in range(len(y_pred))]))
+
+    r2_direct = r2_score(y_pred=y_pred, y_true=y_true)
+    r2 = np.mean([r2_score(y_pred=y_pred[i], y_true=y_true[i]) for i in range(len(y_pred))])  # needs hand-holding to compare the correct things
+    assert not np.isclose(r2, r2_direct)
 
     print(f"RMSE:\t{rmse:.3f}")
     print(f"MSE:\t{mse:.3f}")
@@ -62,7 +69,7 @@ def evaluate_metrics(y_pred, y_true):
     print(f"MAE:\t{mae:.3f}")
     print(f"R2:\t{r2:.3f}")
 
-    ssi = np.mean([SSI(y_true[i], y_pred[i], 
+    ssi = np.mean([SSI(y_pred[i], y_true[i],
                     data_range=(max(y_pred[i].max(), y_true[i].max()) - min(y_pred[i].min(), y_true[i].min())))
                     for i in range(len(y_pred))])
     print(f"Average SSI:\t{ssi:.3f}")
