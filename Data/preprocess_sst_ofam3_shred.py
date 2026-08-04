@@ -14,7 +14,7 @@ import torch
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
 
-from Data.load_sst_ofam3_data import NA_DATA_PATH
+NA_DATA_PATH = "Data/OFAM3/NA/"
 
 NUM_SENSORS = 3
 LAGS = 52  # The OFAM3 SST data is sampled weekly (unknown currently whether these are averaged or just for one day each week)
@@ -53,7 +53,7 @@ class TimeSeriesDataset(torch.utils.data.Dataset):
 #         # Save out again for ease of processing
 #         data.tofile(f'{data_path}/shred_format_data.csv', sep = ',')
 
-def load_files():
+def load_files(file_path=NA_DATA_PATH):
     """Load files and get data from files that have already been preprocessed to contain only
     North Atlantic basin data using load_sst_ofam3_data.py and stored in NA_DATA_PATH
 
@@ -67,7 +67,7 @@ def load_files():
     # TODO: alter so either saves out reformatted version or loads that if it exists?
 
     # Drop final file path -> not a full week out from penultimate path.
-    file_paths = [f for f in sorted(glob(os.path.join(NA_DATA_PATH, "*.csv")))][:-1]
+    file_paths = [f for f in sorted(glob(os.path.join(file_path, "*.csv")))][:-1]
 
     sst_data = []
     dates = []
