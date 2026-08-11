@@ -2,22 +2,14 @@
 
 Helper functions for preprocessing ME4OH data SST OFAM3 data for the SHRED algorithm
 
-Prerequisites: load_sst_ofams3_data.py must be run first, producing NA basin data stored under NA_DATA_PATH
+Prerequisites: load_sst_ofams3_data.py must be run first, producing NA basin data stored under "Data/OFAM3/NA/"
 
 """
-import os
-from glob import glob
-
 import numpy as np
-import pandas as pd
 import torch
-from sklearn.preprocessing import MinMaxScaler
-from tqdm import tqdm
 
-NA_DATA_PATH = "Data/OFAM3/NA/"
-
-NUM_SENSORS = 3
 LAGS = 52  # The OFAM3 SST data is sampled weekly (unknown currently whether these are averaged or just for one day each week)
+
 np.random.seed(42)
 
 
@@ -37,52 +29,6 @@ class TimeSeriesDataset(torch.utils.data.Dataset):
     
     def __len__(self):  # noqa: D105
         return self.len
-
-
-# def load_reformat(data_path=NA_DATA_PATH):
-#     # Load and reformat data
-#     files = [f for f in glob(os.path.join(data_path, "*.csv"))]
-#     reformat_data_path = os.path.join(data_path, "shred_format_data.csv")
-#     if reformat_data_path in files:
-#         print("Data already reformatted")
-
-#     else:
-#         print(f"Found {len(files)} files in {data_path} directory")
-#         data, dates, lats, longs = load_files(files)
-
-#         # Save out again for ease of processing
-#         data.tofile(f'{data_path}/shred_format_data.csv', sep = ',')
-
-def load_files(file_path=NA_DATA_PATH):
-    """Load files and get data from files that have already been preprocessed to contain only
-    North Atlantic basin data using load_sst_ofam3_data.py and stored in NA_DATA_PATH
-
-    Returns:
-        sst_data (2D numpy array): SST value at each time for each lat/long across area used
-            2D array of format [[array of lat/long SST values for time 1], [array of lat/long SST values for time 2], ...]
-        dates (numpy array): array of dates for each time in dataset (from filenames)
-        lats (numpy array): array of latitudes corresponding to SST values
-        longs (numpy array): array of longitudes corresponding to SST values
-    """  # noqa: D205
-    # TODO: alter so either saves out reformatted version or loads that if it exists?
-
-    # Drop final file path -> not a full week out from penultimate path.
-    file_paths = [f for f in sorted(glob(os.path.join(file_path, "*.csv")))][:-1]
-
-    sst_data = []
-    dates = []
-    
-    for file_path in tqdm(file_paths, desc='Loading data'):
-        df = pd.read_csv(file_path)
-        if file_path == file_paths[0]:
-            lats = df.Latitude.to_numpy()
-            longs = df.Longitude.to_numpy()
-        base_name = os.path.basename(file_path)
-        date_str = os.path.splitext(base_name)[0]
-        dates.append(pd.to_datetime(date_str).date())
-        sst_data.append(df.SST.to_numpy())
-
-    return np.array(sst_data), np.array(dates), lats, longs
 
 
 def split_ordered_data(data, dates, all_dates=False, train_frac=0.75):
@@ -176,26 +122,3 @@ def create_shred_sequences(data, sensor_locs, lags=LAGS):
     dataset = TimeSeriesDataset(data_in, data_out)
 
     return dataset
-
-
-# if __name__ == "__main__":
-#     # Load and reformat data
-#     data, dates, lats, longs = load_files()
-
-#     print("Preprocessing data...")
-#     train_data, val_data, test_data = split_ordered_data(data)
-
-#     # Normalise data
-#     sc = MinMaxScaler()
-#     sc = sc.fit(train_data)  # Computes min and max from training data only (prevent data leakage)
-#     train_transformed = sc.transform(train_data)  
-#     val_transformed = sc.transform(val_data)
-#     test_transformed = sc.transform(test_data)
-
-#     # Build sequences
-#     sensor_locations = np.random.choice(data.shape[1], size=NUM_SENSORS, replace=False)
-#     print(f"Sensor location indexes will be: {sensor_locations}")
-
-#     train_dataset = create_shred_sequences(train_transformed)
-#     val_dataset = create_shred_sequences(val_transformed)
-#     test_dataset = create_shred_sequences(test_transformed)

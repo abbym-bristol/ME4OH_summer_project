@@ -1,11 +1,18 @@
-"""noaa_shred.py"""
+"""noaa_data.py
+
+Helper function for loading ME4OH data SST OFAM3 data
+
+Prerequisites: SST_data.mat should be downloaded from https://github.com/Jan-Williams/pyshred/blob/main/Data/SST_data.mat
+    and stored in "Data" folder in this repository.
+
+"""
 import numpy as np
 import pandas as pd
 from scipy.io import loadmat
 
 
 def load_data(data_path='Data/SST_data.mat'):
-    """Load NOAA SST data for Orignal SHRED comparisons
+    """Load NOAA SST data for Original SHRED comparisons
 
     Args:
         data_path (str): path to NOAA SST data
