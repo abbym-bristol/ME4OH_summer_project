@@ -7,7 +7,13 @@ import torch
 
 
 class SDNDataset(torch.utils.data.Dataset):
-    """TBC"""
+    """Takes input sequence of sensor measurements with shape (batch size, lags, num_sensors)
+    and corresponding measurements of high-dimensional state, return Torch dataset
+
+    This is just a rename of the TimeSeriesDataset so that it is clear within code that its an SDN appropriate dataset instead of one for SHRED
+    
+    Origin of TimeSeriesDataset: https://github.com/Jan-Williams/pyshred/blob/main/processdata.py
+    """  # noqa: D205
     def __init__(self, X, Y):  # noqa: D107
         self.X = X
         self.Y = Y
@@ -21,7 +27,18 @@ class SDNDataset(torch.utils.data.Dataset):
 
 
 def create_sdn_datasets(data, sensor_locs, test_lags=None):
-    """TBC"""
+    """Create datasets for input to the SDN model
+
+    Args:
+        data (2D numpy array): 2D array of data to split of format [[values for time 1], [values for time 2], ...]
+        sensor_locs (numpy array): indexes corresponding to the shape of the values for
+            time t in data that indicate the sensor locations to use for the model
+        test_lags (int, optional): if matching a comparison to SHRED, this will be the number of weeks 
+            in each SHRED sequence. Defaults to None.
+
+    Returns:
+        dataset (SDNDataset): torch tensor dataset of input data (values at sensor_locs) and labels (entire data field at the end of each sequence)
+    """
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     if test_lags is None:
