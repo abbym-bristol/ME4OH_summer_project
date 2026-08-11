@@ -24,14 +24,14 @@ from tqdm import tqdm
 
 # Local imports
 import models  # https://github.com/Jan-Williams/pyshred/blob/main/models.py 
-from Data.preprocess_sst_ofam3_shred import (
+from helper_functions.evaluation import get_lats_longs, mask_array_by_lat_long
+from helper_functions.ofam3_data import load_files
+from helper_functions.preprocess_SHRED import (
     NA_DATA_PATH,
     convert_to_anomaly,
     create_shred_sequences,
-    load_files,
     split_ordered_data,
 )
-from helper_functions.evaluation import get_lats_longs, mask_array_by_lat_long
 from helper_functions.saving import JsonEncoder
 
 np.random.seed(42)
