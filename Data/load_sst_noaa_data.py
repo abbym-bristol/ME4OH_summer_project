@@ -1,17 +1,22 @@
 """noaa_data.py
 
-Helper function for loading ME4OH data SST OFAM3 data
+Helper function for loading NOAA SST data
+
+Functionality for processing into same format as ME4OH OFAM3 data files, run this script
 
 Prerequisites: SST_data.mat should be downloaded from https://github.com/Jan-Williams/pyshred/blob/main/Data/SST_data.mat
-    and stored in "Data" folder in this repository.
+    and stored in "Data/NOAA" folder in this repository.
 
 """
-import numpy as np
+# Third-party imports
+import numpy as np  # noqa: I001
 import pandas as pd
 from scipy.io import loadmat
 
+# Local imports
+from Data.load_sst_ofam3_data import process_sst_data
 
-def load_data(data_path='Data/SST_data.mat'):
+def load_data(data_path='Data/NOAA/SST_data.mat'):
     """Load NOAA SST data for Original SHRED comparisons
 
     Args:
@@ -54,3 +59,13 @@ def load_data(data_path='Data/SST_data.mat'):
     data = load_X[:, ocean_idx]
 
     return data, lats, longs, dates
+
+
+if __name__ == "__main__":
+    # Read file
+    print("Loading file...")
+    temps, dates, lats, longs = load_data()
+
+    # Preprocess data
+    print("Preprocessing data...")
+    process_sst_data(temps, dates, lats, longs, data_type="NOAA", world_data=False)
