@@ -74,14 +74,13 @@ def crop_to_area(temps, lats, longs, area="NA"):
         lats (array): cropped latitude values
         longs (array): cropped longitude values
     """
-    try:
-        if area == "GS":
-            min_lat, max_lat = 30.0, 50.0
-            min_long, max_long = -80.0, -30.0
-        elif area == "NA":
-            min_lat, max_lat = 0.0, 60.0
-            min_long, max_long = -80.0, 0.0
-    except ValueError as err:
+    if area == "GS":
+        min_lat, max_lat = 30.0, 50.0
+        min_long, max_long = -80.0, -30.0
+    elif area == "NA":
+        min_lat, max_lat = 0.0, 60.0
+        min_long, max_long = -80.0, 0.0
+    else:
         raise ValueError('Incorrect area passed')
 
     # Create boolean mask for valid region
