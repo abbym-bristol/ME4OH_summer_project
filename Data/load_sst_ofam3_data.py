@@ -105,6 +105,8 @@ if __name__ == "__main__":
     print("Loading file...")
     temps, dates, lats, longs = load_data()
 
+    print(temps.shape)
+
     # Preprocess data
     print("Preprocessing data...")
-    process_sst_data(temps, dates, lats, longs)
+    # process_sst_data(temps, dates, lats, longs)

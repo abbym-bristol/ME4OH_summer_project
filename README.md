@@ -33,6 +33,6 @@ Assumptions as of 30/06/26:
 
 # Usage
 From within your virtual environment in the base folder run the following commands to load and do initial preprocessing of the data ready for the notebooks:
-- `python Data/load_ohc_l1_data.py`
-- `python Data/load_sst_ofam3_data.py`
-- `python Data/load_sst_noaa_data.py`  # please note: dates are bodged by me bc original SHRED paper doesn't specify these
+- `python -m Data.load_ohc_l1_data`
+- `python -m Data.load_sst_ofam3_data`
+- `python -m Data.load_sst_noaa_data`  # please note: dates are bodged by me bc original SHRED paper doesn't specify these

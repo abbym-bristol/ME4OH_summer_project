@@ -8,13 +8,17 @@ Prerequisites: SST_data.mat should be downloaded from https://github.com/Jan-Wil
     and stored in "Data/NOAA" folder in this repository.
 
 """
+# Standard imports
+import os  # noqa: I001
+
 # Third-party imports
-import numpy as np  # noqa: I001
+import numpy as np
 import pandas as pd
 from scipy.io import loadmat
+from tqdm import tqdm
 
 # Local imports
-from Data.load_sst_ofam3_data import process_sst_data
+from Data.load_ohc_l1_data import crop_df_to_area
 
 def load_data(data_path='Data/NOAA/SST_data.mat'):
     """Load NOAA SST data for Original SHRED comparisons
@@ -61,10 +65,61 @@ def load_data(data_path='Data/NOAA/SST_data.mat'):
     return data, lats, longs, dates
 
 
+def process_sst_data(temps, dates, lats, longs, world_data=True):
+    """Iterate through temps array to build DataFrames for each timestamp, of the lat, long and SST values.
+    Preprocesses this to change the Longitude coordinates ready for geopandas plotting and to filter to the NA basin.
+
+    Args:
+        temps (array): array with shape (len(dates), 1, len(lats), len(longs)) containing all the SST measurements
+        dates (array): array of length 1879 containing corresponding Datetimes for the data
+        lats (array): array of length 600 containing the range of latitude values for the data
+        longs (array): array of length 1440 containing the range of longitude values for the data
+        world_data (bool, optional): whether to save world data. Defaults to True, saving world data.
+
+    Returns:
+        None
+    """  # noqa: D205
+    for k in tqdm(range(len(dates))):
+        sst_array = []
+        lat_array = []
+        long_array = []
+        for i in range(len(lats)):
+            for j in range(len(longs)):
+                sst_array.append(temps[k][0][i][j])
+                lat_array.append(lats[i])
+                long_array.append(longs[j])
+        df = pd.DataFrame({
+            "Latitude": lat_array,
+            "Longitude": long_array,
+            "SST": sst_array
+        })
+
+        # Remove land values - these have filler value of -32768 used
+        land_indexes = df.index[df['SST'] == -32768].tolist()  
+        df = df.loc[~df.index.isin(land_indexes)]
+
+        # Convert longitude to -180 to 180 format, allows plotting against geopandas world maps
+        df['Longitude'] = df['Longitude'].apply(lambda x: -(360-x) if x > 180 else x)
+
+        # Save world file
+        if world_data:
+            directory = f"Data/{data_type}/world/"
+            os.makedirs(directory, exist_ok=True)
+            df.to_csv(f"{directory}/{dates[k]}.csv", index=False)
+
+        # Filter to NA basin
+        directory = f"Data/{data_type}/NA/"
+        os.makedirs(directory, exist_ok=True)
+        na_df = crop_df_to_area(df, "NA", "Date")
+        na_file_name = f"{directory}/{dates[k]}.csv"
+        na_df.to_csv(na_file_name, index=False)
+
+
 if __name__ == "__main__":
     # Read file
     print("Loading file...")
-    temps, dates, lats, longs = load_data()
+    temps, lats, longs, dates = load_data()
+    print(temps.shape)
 
     # Preprocess data
     print("Preprocessing data...")
