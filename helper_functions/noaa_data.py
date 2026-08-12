@@ -8,17 +8,11 @@ Prerequisites: SST_data.mat should be downloaded from https://github.com/Jan-Wil
     and stored in "Data/NOAA" folder in this repository.
 
 """
-# Standard imports
-import os  # noqa: I001
-
 # Third-party imports
 import numpy as np
 import pandas as pd
 from scipy.io import loadmat
-from tqdm import tqdm
 
-# Local imports
-from Data.load_ohc_l1_data import crop_df_to_area
 
 def load_data(data_path='Data/NOAA/SST_data.mat'):
     """Load NOAA SST data for Original SHRED comparisons
@@ -64,68 +58,41 @@ def load_data(data_path='Data/NOAA/SST_data.mat'):
 
     return data, lats, longs, dates
 
-def crop_df_to_area(df, area, sort_by):
-    """Crop a dataframe with Latitude, Longitude and Data (any name) to an area set coordinates
+
+def crop_to_area(temps, lats, longs, area="NA"):
+    """Crop SST data to a specific geographic area using boolean masking.
 
     Args:
-        df (pandas Dataframe): containing columns for "Latitude", "Longitude", and other data in other columns
-        area (str): area to crop to. Current options are "NA" (which will filter to the NA basin), or
-            "GS" (Gulf stream region of NA basin).
-        sort_by (str): column to sort df by
-    """
-    if area == "GS":
-        min_lat, max_lat = 30.0, 50.0
-        min_long, max_long = -80.0, -30.0
-    elif area == "NA":
-        min_lat, max_lat = 0.0, 60.0
-        min_long, max_long = -80.0, 0.0
-
-    df_mask = ((df['Longitude'] >= min_long) & (df['Longitude'] <= max_long) &
-               (df['Latitude'] >= min_lat) & (df['Latitude'] <= max_lat))
-
-    return df.loc[df_mask].sort_values(sort_by).reset_index(drop=True)
-
-def crop_to_area(temps, dates, lats, longs, area="NA"):
-    """Iterate through temps array to build DataFrames for each timestamp, of the lat, long and SST values.
-    Preprocesses this to change the Longitude coordinates ready for geopandas plotting and to filter to the NA basin.
-
-    Args:
-        temps (array): array with shape (len(dates), len(lats)) containing all the SST measurements
-        dates (array): array containing corresponding Datetimes for the data
+        temps (array): array with shape (time_steps, n_points) containing all SST measurements
         lats (array): array containing the latitude values for the data
         longs (array): array containing the longitude values for the data
-        area (str, optional): area to crop to. Current options are "NA" (which will filter to the NA basin), or
-            "GS" (Gulf stream region of NA basin). Defaults to NA.
+        area (str, optional): area to crop to. Current options are "NA" (North Atlantic) or
+            "GS" (Gulf Stream region). Defaults to "NA".
 
     Returns:
-        temps
-        lats
-        longs
-    """  # noqa: D205
-    # directory = f"Data/NOAA/NA/"
-    # os.makedirs(directory, exist_ok=True)
+        temps (array): cropped SST data with shape (time_steps, n_cropped_points)
+        lats (array): cropped latitude values
+        longs (array): cropped longitude values
+    """
+    try:
+        if area == "GS":
+            min_lat, max_lat = 30.0, 50.0
+            min_long, max_long = -80.0, -30.0
+        elif area == "NA":
+            min_lat, max_lat = 0.0, 60.0
+            min_long, max_long = -80.0, 0.0
+    except ValueError as err:
+        raise ValueError('Incorrect area passed')
 
+    # Create boolean mask for valid region
+    mask = ((longs >= min_long) & (longs <= max_long) &
+            (lats >= min_lat) & (lats <= max_lat))
 
-    # for i in tqdm(range(len(dates))):
-    #     df = pd.DataFrame({
-    #         "Latitude": lats,
-    #         "Longitude": longs,
-    #         "SST": temps
-    #     })
-    #     na_df = crop_df_to_area(df, "NA", "Latitude")
-    #     # na_file_name = f"{directory}/{dates[k]}.csv"
-    #     # na_df.to_csv(na_file_name, index=False)
+    # Apply mask to lats and longs
+    lats = lats[mask]
+    longs = longs[mask]
 
-    
-    # return na_df.SST, na_df.Latitude, na_df.Longitude
+    # Apply mask to temps across all time steps
+    temps = temps[:, mask]
 
-
-if __name__ == "__main__":
-    # Read file
-    print("Loading file...")
-    temps, lats, longs, dates = load_data()
-
-
-    # Preprocess data
-    print("Preprocessing data...")
-    process_sst_data(temps, dates, lats, longs, data_type="NOAA", world_data=False)
+    return temps, lats, longs
