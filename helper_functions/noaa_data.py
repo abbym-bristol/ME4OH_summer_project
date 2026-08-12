@@ -64,62 +64,67 @@ def load_data(data_path='Data/NOAA/SST_data.mat'):
 
     return data, lats, longs, dates
 
+def crop_df_to_area(df, area, sort_by):
+    """Crop a dataframe with Latitude, Longitude and Data (any name) to an area set coordinates
 
-def process_sst_data(temps, dates, lats, longs, world_data=True):
+    Args:
+        df (pandas Dataframe): containing columns for "Latitude", "Longitude", and other data in other columns
+        area (str): area to crop to. Current options are "NA" (which will filter to the NA basin), or
+            "GS" (Gulf stream region of NA basin).
+        sort_by (str): column to sort df by
+    """
+    if area == "GS":
+        min_lat, max_lat = 30.0, 50.0
+        min_long, max_long = -80.0, -30.0
+    elif area == "NA":
+        min_lat, max_lat = 0.0, 60.0
+        min_long, max_long = -80.0, 0.0
+
+    df_mask = ((df['Longitude'] >= min_long) & (df['Longitude'] <= max_long) &
+               (df['Latitude'] >= min_lat) & (df['Latitude'] <= max_lat))
+
+    return df.loc[df_mask].sort_values(sort_by).reset_index(drop=True)
+
+def crop_to_area(temps, dates, lats, longs, area="NA"):
     """Iterate through temps array to build DataFrames for each timestamp, of the lat, long and SST values.
     Preprocesses this to change the Longitude coordinates ready for geopandas plotting and to filter to the NA basin.
 
     Args:
-        temps (array): array with shape (len(dates), 1, len(lats), len(longs)) containing all the SST measurements
-        dates (array): array of length 1879 containing corresponding Datetimes for the data
-        lats (array): array of length 600 containing the range of latitude values for the data
-        longs (array): array of length 1440 containing the range of longitude values for the data
-        world_data (bool, optional): whether to save world data. Defaults to True, saving world data.
+        temps (array): array with shape (len(dates), len(lats)) containing all the SST measurements
+        dates (array): array containing corresponding Datetimes for the data
+        lats (array): array containing the latitude values for the data
+        longs (array): array containing the longitude values for the data
+        area (str, optional): area to crop to. Current options are "NA" (which will filter to the NA basin), or
+            "GS" (Gulf stream region of NA basin). Defaults to NA.
 
     Returns:
-        None
+        temps
+        lats
+        longs
     """  # noqa: D205
-    for k in tqdm(range(len(dates))):
-        sst_array = []
-        lat_array = []
-        long_array = []
-        for i in range(len(lats)):
-            for j in range(len(longs)):
-                sst_array.append(temps[k][0][i][j])
-                lat_array.append(lats[i])
-                long_array.append(longs[j])
-        df = pd.DataFrame({
-            "Latitude": lat_array,
-            "Longitude": long_array,
-            "SST": sst_array
-        })
+    # directory = f"Data/NOAA/NA/"
+    # os.makedirs(directory, exist_ok=True)
 
-        # Remove land values - these have filler value of -32768 used
-        land_indexes = df.index[df['SST'] == -32768].tolist()  
-        df = df.loc[~df.index.isin(land_indexes)]
 
-        # Convert longitude to -180 to 180 format, allows plotting against geopandas world maps
-        df['Longitude'] = df['Longitude'].apply(lambda x: -(360-x) if x > 180 else x)
+    # for i in tqdm(range(len(dates))):
+    #     df = pd.DataFrame({
+    #         "Latitude": lats,
+    #         "Longitude": longs,
+    #         "SST": temps
+    #     })
+    #     na_df = crop_df_to_area(df, "NA", "Latitude")
+    #     # na_file_name = f"{directory}/{dates[k]}.csv"
+    #     # na_df.to_csv(na_file_name, index=False)
 
-        # Save world file
-        if world_data:
-            directory = f"Data/{data_type}/world/"
-            os.makedirs(directory, exist_ok=True)
-            df.to_csv(f"{directory}/{dates[k]}.csv", index=False)
-
-        # Filter to NA basin
-        directory = f"Data/{data_type}/NA/"
-        os.makedirs(directory, exist_ok=True)
-        na_df = crop_df_to_area(df, "NA", "Date")
-        na_file_name = f"{directory}/{dates[k]}.csv"
-        na_df.to_csv(na_file_name, index=False)
+    
+    # return na_df.SST, na_df.Latitude, na_df.Longitude
 
 
 if __name__ == "__main__":
     # Read file
     print("Loading file...")
     temps, lats, longs, dates = load_data()
-    print(temps.shape)
+
 
     # Preprocess data
     print("Preprocessing data...")

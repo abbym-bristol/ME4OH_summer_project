@@ -95,7 +95,7 @@ def process_sst_data(temps, dates, lats, longs, data_type="OFAM3", world_data=Tr
         # Filter to NA basin
         directory = f"Data/{data_type}/NA/"
         os.makedirs(directory, exist_ok=True)
-        na_df = crop_df_to_area(df, "NA", "Date")
+        na_df = crop_df_to_area(df, "NA", "Latitude")  # 12/08/26: sort by changed from Date (which doesn't exist); but haven't tested this code
         na_file_name = f"{directory}/{dates[k]}.csv"
         na_df.to_csv(na_file_name, index=False)
 
