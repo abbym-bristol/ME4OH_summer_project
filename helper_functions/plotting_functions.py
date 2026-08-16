@@ -125,7 +125,7 @@ def plot_sst_map(data, area="world", background=False, cmap='plasma', min_sst=No
     cbar.set_label('SST ($\\degree$C)')
 
     if sensor_coords is not None:
-        ax.scatter(sensor_coords[0], sensor_coords[1], marker='.', c='k', s=marker_size)
+        ax.scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k', s=marker_size*10)
 
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
