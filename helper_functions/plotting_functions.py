@@ -170,9 +170,9 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", cmap="plasma", 
         Plot of OHC map, saved figure.
     """  # noqa: D205
     if diff_data is not None:
-        fig, ax = plt.subplots(1, 3, figsize=(18, 9))
+        fig, ax = plt.subplots(1, 3, figsize=(22, 9))
     else:
-        fig, ax = plt.subplots(1, 2, figsize=(18, 9))
+        fig, ax = plt.subplots(1, 2, figsize=(22, 9))
 
     # Create a shared normalization object for SST plots
     min_sst = min([min(recon_data.SST), min(truth_data.SST)])
