@@ -27,13 +27,13 @@ import models  # https://github.com/Jan-Williams/pyshred/blob/main/models.py
 from helper_functions.evaluation import get_lats_longs, mask_array_by_lat_long
 from helper_functions.ofam3_data import load_files
 from helper_functions.preprocess_SHRED import (
-    NA_DATA_PATH,
     convert_to_anomaly,
     create_shred_sequences,
     split_ordered_data,
 )
 from helper_functions.saving import JsonEncoder
 
+NA_DATA_PATH = "Data/OFAM3/NA"
 np.random.seed(42)
 
 
@@ -171,7 +171,7 @@ def evaluate_reconstructions(file_path, lags, version, quantities):
 
         results[num_sensors] = {"NA": NA_results, "GS": GS_results}
 
-    with open(f"{file_path}/{version}/eval_metric_results.json", 'w', encoding='utf-8') as f:
+    with open(f"{file_path}/{version}/eval_metric_results_{quantities[0]}_{quantities[-1]}.json", 'w', encoding='utf-8') as f:
         json.dump(results, f, ensure_ascii=False, indent=4, cls=JsonEncoder)
 
 if __name__ == "__main__":
@@ -189,7 +189,7 @@ if __name__ == "__main__":
 
     # Optional - defaults set
     parser.add_argument("-f", "--filepath", help="File path to save results under",
-                        default="Reconstructions/change_num_sensors/")
+                        default="Reconstructions/change_num_sensors")
     parser.add_argument("-d", "--hiddendim", help="Hidden dimension for sequence model", type=int, default=64)
     parser.add_argument("-s", "--sequence", help="Sequence model to use", default="LSTM")
     parser.add_argument("-l", "--lags", help="Lags (sequence length in weeks)", default=52, type=int)
@@ -197,6 +197,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     quantities = range(args.start_sensors, args.end_sensors+args.step_sensors, args.step_sensors)
+    print("Quantities to train for: ", quantities)
+    print("List: ", list(quantities))
+    print(f"Save path will be: {args.filepath}/{args.version}/")
+    input("Press Enter to continue...")
 
     if args.train:
         print("Mode: Train models")

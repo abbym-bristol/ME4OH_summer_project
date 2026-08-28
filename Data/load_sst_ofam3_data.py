@@ -9,6 +9,7 @@ Basic preprocessing done:
 - Filter to NA basin
 
 """
+import os
 from datetime import date, timedelta
 
 import netCDF4 as nc
@@ -48,7 +49,7 @@ def load_data():
     return temps, dates, lats, longs
 
 
-def process_sst_data(temps, dates, lats, longs):
+def process_sst_data(temps, dates, lats, longs, data_type="OFAM3", world_data=True):
     """Iterate through temps array to build DataFrames for each timestamp, of the lat, long and SST values.
     Preprocesses this to change the Longitude coordinates ready for geopandas plotting and to filter to the NA basin.
 
@@ -57,6 +58,8 @@ def process_sst_data(temps, dates, lats, longs):
         dates (array): array of length 1879 containing corresponding Datetimes for the data
         lats (array): array of length 600 containing the range of latitude values for the data
         longs (array): array of length 1440 containing the range of longitude values for the data
+        data_type (str, optional): string of data type, current choices: OFAM3, NOAA. Defaults to OFAM3.
+        world_data (bool, optional): whether to save world data. Defaults to True, saving world data.
 
     Returns:
         None
@@ -84,11 +87,16 @@ def process_sst_data(temps, dates, lats, longs):
         df['Longitude'] = df['Longitude'].apply(lambda x: -(360-x) if x > 180 else x)
 
         # Save world file
-        df.to_csv(f"Data/OFAM3/world/{dates[k]}.csv", index=False)
+        if world_data:
+            directory = f"Data/{data_type}/world/"
+            os.makedirs(directory, exist_ok=True)
+            df.to_csv(f"{directory}/{dates[k]}.csv", index=False)
 
         # Filter to NA basin
-        na_df = crop_df_to_area(df, "NA", "Date")
-        na_file_name = f"{NA_DATA_PATH}{dates[k]}.csv"
+        directory = f"Data/{data_type}/NA/"
+        os.makedirs(directory, exist_ok=True)
+        na_df = crop_df_to_area(df, "NA", "Latitude")  # 12/08/26: sort by changed from Date (which doesn't exist); but haven't tested this code
+        na_file_name = f"{directory}/{dates[k]}.csv"
         na_df.to_csv(na_file_name, index=False)
 
 
@@ -97,6 +105,8 @@ if __name__ == "__main__":
     print("Loading file...")
     temps, dates, lats, longs = load_data()
 
+    print(temps.shape)
+
     # Preprocess data
     print("Preprocessing data...")
-    process_sst_data(temps, dates, lats, longs)
+    # process_sst_data(temps, dates, lats, longs)

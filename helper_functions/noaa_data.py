@@ -1,17 +1,20 @@
 """noaa_data.py
 
-Helper function for loading ME4OH data SST OFAM3 data
+Helper function for loading NOAA SST data
+
+Functionality for processing into same format as ME4OH OFAM3 data files, run this script
 
 Prerequisites: SST_data.mat should be downloaded from https://github.com/Jan-Williams/pyshred/blob/main/Data/SST_data.mat
-    and stored in "Data" folder in this repository.
+    and stored in "Data/NOAA" folder in this repository.
 
 """
+# Third-party imports
 import numpy as np
 import pandas as pd
 from scipy.io import loadmat
 
 
-def load_data(data_path='Data/SST_data.mat'):
+def load_data(data_path='Data/NOAA/SST_data.mat'):
     """Load NOAA SST data for Original SHRED comparisons
 
     Args:
@@ -54,3 +57,41 @@ def load_data(data_path='Data/SST_data.mat'):
     data = load_X[:, ocean_idx]
 
     return data, lats, longs, dates
+
+
+def crop_to_area(temps, lats, longs, area="NA"):
+    """Crop SST data to a specific geographic area using boolean masking.
+
+    Args:
+        temps (array): array with shape (time_steps, n_points) containing all SST measurements
+        lats (array): array containing the latitude values for the data
+        longs (array): array containing the longitude values for the data
+        area (str, optional): area to crop to. Current options are "NA" (North Atlantic) or
+            "GS" (Gulf Stream region). Defaults to "NA".
+
+    Returns:
+        temps (array): cropped SST data with shape (time_steps, n_cropped_points)
+        lats (array): cropped latitude values
+        longs (array): cropped longitude values
+    """
+    if area == "GS":
+        min_lat, max_lat = 30.0, 50.0
+        min_long, max_long = -80.0, -30.0
+    elif area == "NA":
+        min_lat, max_lat = 0.0, 60.0
+        min_long, max_long = -80.0, 0.0
+    else:
+        raise ValueError('Incorrect area passed')
+
+    # Create boolean mask for valid region
+    mask = ((longs >= min_long) & (longs <= max_long) &
+            (lats >= min_lat) & (lats <= max_lat))
+
+    # Apply mask to lats and longs
+    lats = lats[mask]
+    longs = longs[mask]
+
+    # Apply mask to temps across all time steps
+    temps = temps[:, mask]
+
+    return temps, lats, longs
