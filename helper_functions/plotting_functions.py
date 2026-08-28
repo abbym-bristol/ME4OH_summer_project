@@ -86,16 +86,18 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, area="world"):
     plt.close()
 
 
-def plot_sst_map(data, area="world", background=False, cmap='plasma', min_sst=None, marker_size=1, max_sst=None, sensor_coords=None, title=None):
+def plot_sst_map(data, annotate=False, area="world", background=None, cmap="plasma", min_sst=None, marker_size=1, max_sst=None, sensor_coords=None, title=None):
     """For a given subset of data, plot the SST map over the world or filtered to a specific area of the ocean
     
     Args:
         data (df or df.groupby object): dataframe (or df.groupby object of a dataframe) containing columns for
             latitude, longitude and observed SST.
+        annotate (Bool, optional): TBC
         area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin),
             "GS" (Gulf stream region of NA basin), or "world" (whole globe, default).
         cmap (str or plt colormap, optional): colourmap to use for figure, defaults to "plasma".
-        background (bool, optional): whether to fill the plot with a blue background, defaults to False.
+        background (str, optional): if not None, will fill the plot with a background of the colour specified.
+            Valid options: "lightblue", "black", etc. Defaults to None.
         min_sst (float, optional): minimum value across entire dataset (ensures uniform colourbar).
         marker_size (float, optional): size of marker to use in scatter plots.
         max_sst (float, optional): maximum value across entire dataset (ensures uniform colourbar).
@@ -106,6 +108,7 @@ def plot_sst_map(data, area="world", background=False, cmap='plasma', min_sst=No
     Returns:
         Plot of OHC map, saved figure.
     """
+    plt.rcParams.update({'font.size': 16})
     if area=="world":
         fig, ax = plt.subplots(figsize=(18, 9))
     else:
@@ -119,7 +122,10 @@ def plot_sst_map(data, area="world", background=False, cmap='plasma', min_sst=No
     # cmap = plt.cm.plasma   # Define the colormap
 
     # Plot SST map
-    s = ax.scatter(data.Longitude, data.Latitude, c=data.SST, s=marker_size, cmap=cmap, norm=norm)
+    s = ax.scatter(data.Longitude, data.Latitude, c=data.SST, s=marker_size, cmap=cmap, norm=norm, marker='s')
+    if annotate:
+        for i in range(len(data.Longitude)):
+            plt.annotate(i+1, (data.Longitude[i]+0.5, data.Latitude[i]+0.5), c='k')
 
     cbar = fig.colorbar(s, ax=ax, cmap=cmap, norm=norm)
     cbar.set_label('SST ($\\degree$C)')
@@ -129,8 +135,8 @@ def plot_sst_map(data, area="world", background=False, cmap='plasma', min_sst=No
 
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
-    if background:
-        ax.set_facecolor("lightblue")
+    if background is not None:
+        ax.set_facecolor(background)
 
     set_area(ax, area)
 
