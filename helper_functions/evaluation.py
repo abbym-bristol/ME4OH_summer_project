@@ -1,7 +1,6 @@
 """evaluation.py"""
 
 import os
-from glob import glob
 
 import cv2
 import matplotlib.pyplot as plt
@@ -16,28 +15,6 @@ from sklearn.metrics import r2_score
 from tqdm import tqdm
 
 # from shapely.plotting import plot_polygon
-
-def get_lats_longs(data_path):
-    """Load files and get data from files that have already been preprocessed, for example those produced
-    using load_sst_ofam3_data.py which are stored in "Data/OFAM3/NA/".
-
-    NOTE: Assumes the SST data is always measured against the same latitudes and longitudes in the preprocessed data files
-
-    Args:
-        data_path (str): path to preprocessed data
-    Returns:
-        lats (numpy array): array of latitudes corresponding to SST values
-        longs (numpy array): array of longitudes corresponding to SST values
-    """  # noqa: D205
-    # Drop final file path -> not a full week out from penultimate path.
-    file_paths = [f for f in sorted(glob(os.path.join(data_path, "*.csv")))][:-1]
-
-    # Read the first file
-    df = pd.read_csv(file_paths[0])
-    lats = df.Latitude.to_numpy()
-    longs = df.Longitude.to_numpy()
-
-    return lats, longs
 
 
 def evaluate_metrics(y_pred, y_true):
