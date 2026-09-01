@@ -131,7 +131,10 @@ def plot_sst_map(data, annotate=False, area="world", background=None, cmap="plas
                 plt.annotate(i+1, (data.Longitude[i]+0.5, data.Latitude[i]), c='k')
 
     cbar = fig.colorbar(s, ax=ax, cmap=cmap, norm=norm)
-    cbar.set_label('SST ($\\degree$C)')
+    if cmap == "bwr":  # for difference plots
+        cbar.set_label('Error ($\\degree$C)')
+    else:
+        cbar.set_label('SST ($\\degree$C)')
 
     if sensor_coords is not None:
         ax.scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k', s=marker_size*10)
@@ -209,7 +212,7 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", cmap="plasma", 
         norm_diff = Normalize(vmin=-extent, vmax=extent)
         cmap_diff = 'bwr'
         s = ax[2].scatter(diff_data.Longitude, diff_data.Latitude, c=diff_data.SST, s=marker_size, marker=marker_style, cmap=cmap_diff, norm=norm_diff)
-        ax[2].set_title('Difference ($\\degree$C)')
+        ax[2].set_title('Error ($\\degree$C)')
         cax = make_axes_locatable(ax[2]).append_axes('right', size='5%', pad=0.1)
         cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm_diff)
 
