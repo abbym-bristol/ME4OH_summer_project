@@ -86,16 +86,18 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, area="world"):
     plt.close()
 
 
-def plot_sst_map(data, area="world", background=False, cmap='plasma', min_sst=None, marker_size=1, max_sst=None, sensor_coords=None, title=None):
+def plot_sst_map(data, annotate=False, area="world", background=None, cmap="plasma", min_sst=None, marker_style='s', marker_size=1, max_sst=None, sensor_coords=None, title=None):
     """For a given subset of data, plot the SST map over the world or filtered to a specific area of the ocean
     
     Args:
         data (df or df.groupby object): dataframe (or df.groupby object of a dataframe) containing columns for
             latitude, longitude and observed SST.
+        annotate (Bool, optional): TBC
         area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin),
             "GS" (Gulf stream region of NA basin), or "world" (whole globe, default).
         cmap (str or plt colormap, optional): colourmap to use for figure, defaults to "plasma".
-        background (bool, optional): whether to fill the plot with a blue background, defaults to False.
+        background (str, optional): if not None, will fill the plot with a background of the colour specified.
+            Valid options: "lightblue", "black", etc. Defaults to None.
         min_sst (float, optional): minimum value across entire dataset (ensures uniform colourbar).
         marker_size (float, optional): size of marker to use in scatter plots.
         max_sst (float, optional): maximum value across entire dataset (ensures uniform colourbar).
@@ -106,6 +108,7 @@ def plot_sst_map(data, area="world", background=False, cmap='plasma', min_sst=No
     Returns:
         Plot of OHC map, saved figure.
     """
+    plt.rcParams.update({'font.size': 16})
     if area=="world":
         fig, ax = plt.subplots(figsize=(18, 9))
     else:
@@ -119,18 +122,27 @@ def plot_sst_map(data, area="world", background=False, cmap='plasma', min_sst=No
     # cmap = plt.cm.plasma   # Define the colormap
 
     # Plot SST map
-    s = ax.scatter(data.Longitude, data.Latitude, c=data.SST, s=marker_size, cmap=cmap, norm=norm)
+    s = ax.scatter(data.Longitude, data.Latitude, c=data.SST, s=marker_size, cmap=cmap, norm=norm, marker=marker_style)
+    if type(annotate) is list:
+        for i in annotate:
+            plt.annotate(i, (data.Longitude[i-1]+0.5, data.Latitude[i-1]), c='k')
+    elif annotate:
+            for i in range(len(data.Longitude)):
+                plt.annotate(i+1, (data.Longitude[i]+0.5, data.Latitude[i]), c='k')
 
     cbar = fig.colorbar(s, ax=ax, cmap=cmap, norm=norm)
-    cbar.set_label('SST ($\\degree$C)')
+    if cmap == "bwr":  # for difference plots
+        cbar.set_label('Error ($\\degree$C)')
+    else:
+        cbar.set_label('SST ($\\degree$C)')
 
     if sensor_coords is not None:
         ax.scatter(sensor_coords[0], sensor_coords[1], marker='x', c='k', s=marker_size*10)
 
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
-    if background:
-        ax.set_facecolor("lightblue")
+    if background is not None:
+        ax.set_facecolor(background)
 
     set_area(ax, area)
 
@@ -141,7 +153,7 @@ def plot_sst_map(data, area="world", background=False, cmap='plasma', min_sst=No
     plt.close()
 
 
-def plot_compare_sst_recon(recon_data, truth_data, area="world", cmap="plasma", diff_data=None, marker_size=1, sensor_coords=None, title=None):
+def plot_compare_sst_recon(recon_data, truth_data, area="world", cmap="plasma", diff_data=None, marker_style='s', marker_size=1, sensor_coords=None, title=None):
     """For a given subset of data, plot the SST map over a set area of the ocean for either reconstruction and ground truth,
     or reconstruction, ground truth and difference between the two.
 
@@ -164,9 +176,9 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", cmap="plasma", 
         Plot of OHC map, saved figure.
     """  # noqa: D205
     if diff_data is not None:
-        fig, ax = plt.subplots(1, 3, figsize=(18, 9))
+        fig, ax = plt.subplots(1, 3, figsize=(22, 9))
     else:
-        fig, ax = plt.subplots(1, 2, figsize=(18, 9))
+        fig, ax = plt.subplots(1, 2, figsize=(22, 9))
 
     # Create a shared normalization object for SST plots
     min_sst = min([min(recon_data.SST), min(truth_data.SST)])
@@ -183,7 +195,7 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", cmap="plasma", 
         cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm)
 
     # Truth subfigure
-    s = ax[1].scatter(truth_data.Longitude, truth_data.Latitude, c=truth_data.SST, s=marker_size, cmap=cmap, norm=norm)
+    s = ax[1].scatter(truth_data.Longitude, truth_data.Latitude, c=truth_data.SST, s=marker_size, marker=marker_style, cmap=cmap, norm=norm)
     ax[1].set_title('True SST ($\\degree$C)')
 
     if diff_data is not None:
@@ -199,8 +211,8 @@ def plot_compare_sst_recon(recon_data, truth_data, area="world", cmap="plasma", 
         extent=max(np.abs(min(diff_data.SST)), max(diff_data.SST))
         norm_diff = Normalize(vmin=-extent, vmax=extent)
         cmap_diff = 'bwr'
-        s = ax[2].scatter(diff_data.Longitude, diff_data.Latitude, c=diff_data.SST, s=marker_size, cmap=cmap_diff, norm=norm_diff)
-        ax[2].set_title('Difference ($\\degree$C)')
+        s = ax[2].scatter(diff_data.Longitude, diff_data.Latitude, c=diff_data.SST, s=marker_size, marker=marker_style, cmap=cmap_diff, norm=norm_diff)
+        ax[2].set_title('Error ($\\degree$C)')
         cax = make_axes_locatable(ax[2]).append_axes('right', size='5%', pad=0.1)
         cbar = fig.colorbar(s, cax=cax, cmap=cmap, norm=norm_diff)
 
