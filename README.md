@@ -35,7 +35,7 @@ Datasets:
 
 2. OFAM3: ME4OH full-field dataset at 1/4° resolution generated from the OFAM3 numerical model [[3]](https://data.csiro.au/collection/csiro%3A60826v9). 
 
-3. TBC - ME4OH sythetic profiles for EDA? OHC?
+3. ME4OH Synthetic Profiles: ME4OH synthetic profiles from the OFAM3 dataset, which mirrors the sampling locations and times of the EN4.1.1 dataset of real in-situ sensors [[3]](https://data.csiro.au/collection/csiro%3A60826v9). 
 
 Assumptions as of 30/06/26:
 - OFAM3 data is stored for Thursdays across the 1979-2014 time period.
@@ -50,28 +50,40 @@ Models:
 
 # Usage
 
-## Date preprocessing
-[Which data to download and folder path it must be stored under]
+## Data preprocessing
+Download and store data as follows:
+1. Save `SST_data.mat` from [[2]](https://github.com/Jan-Williams/pyshred/blob/main/Data/SST_data.mat) under `Data/NOAA/`
+2. For OFAM3 full-field data: download file named `temp_ofam3_7d_197901-201412.0p25x0p25.nc` from the `ofam3/sfc/` folder in [[3]](https://data.csiro.au/collection/csiro%3A60826v9) and store under `Data/OFAM3/`
+3. For synthetic profile data: download the files from the `en4.1.1/1993-2014/` folder in [[3]](https://data.csiro.au/collection/csiro%3A60826v9) and store under `Data/ME4OH_EN411_OFAM3/data/en4.1.1/1993-2014/`
 
-From within your virtual environment in the base folder run the following commands to load and do initial preprocessing of the data ready for the notebooks:
+Then from within your virtual environment in the base folder run the following commands to load and do initial preprocessing of the data ready for the notebooks:
 - `python -m Data.load_ohc_l1_data`  
 - `python -m Data.load_sst_ofam3_data`
-- `python -m Data.load_sst_noaa_data`  # please note: dates are bodged by me bc original SHRED paper doesn't specify these
+- `python -m Data.load_sst_noaa_data`
 
 ## Exploratory data analysis
-
-TBC
+- EDA of the ME4OH Synthetic Profile OHC data: `EDA_OHC.ipynb`
+- EDA of the ME4OH OFAM3 SST data: `EDA_SST.ipynb`
+- To make animations of OHC and SST use the `EDA_animations_[type].ipynb` notebooks
 
 ## Training models/producing reconstructions
 Run the following notebooks:
-- ...
-
-TBC
+- `ReconstructingSST-SHRED_SDN_static.ipynb` to train and generate reconstructions using the SDN and SHRED models
+- `ReconstructingSST-POD_RBFI_static.ipynb` to generate reconstructions using POD and RBFI methods
 
 ## Evaluating reconstructions
+Run:
+- `EvaluatingSST_Static.ipynb` to evaluate each experiment/set up and produce graphs used for the report
 
 
-## References:
+# Extra stuff:
+- `shred_ofam3sst_static_changing_sensor_nums.py` contains a script for training and generating reconstructions for changing numbers of sensors used
+- `original_SHRED_SST_NOAA.ipynb` runs the SHRED process on the NOAA data as defined in the original paper WIlliams et al. 2024 [[5]](https://royalsocietypublishing.org/rspa/article/480/2298/20240054/66770/).
+- Notebooks labelled `ExpX-...` contain a range of experiments and graph plots for different set ups of the problem space
+- `tuning_lstm_dimensions.ipynb` uses PCA to determine the internal (hidden) dimension of the LSTM portion of SHRED for the OFAM3 data
+
+
+# References:
 [[1]](https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html) NOAA dataset origin, https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.html
 
 [[2]](https://github.com/Jan-Williams/pyshred/blob/main/Data/SST_data.mat) Jan P Williams, pyshred repository, NOAA SST dataset, https://github.com/Jan-Williams/pyshred/blob/main/Data/SST_data.mat

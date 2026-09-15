@@ -48,7 +48,7 @@ def set_area(ax, area):
         return
 
 
-def plot_ohc_map(data, title, min_ohc, max_ohc, area="world"):
+def plot_ohc_map(data, title, min_ohc, max_ohc, area="world", background=None):
     """For a given subset of data, plot the OHC map over the world or filtered to a specific ocean basin
     
     Args:
@@ -59,6 +59,8 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, area="world"):
         min_ohc (float): maximum OHC value across entire dataset (ensures uniform colourbar)
         area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin),
             "GS" (Gulf stream region of NA basin), or "world" (whole globe, default).
+        background (str, optional): if not None, will fill the plot with a background of the colour specified.
+            Valid options: "lightblue", "black", etc. Defaults to None.
     Returns:
         Plot of OHC map, saved figure.
     """
@@ -76,7 +78,8 @@ def plot_ohc_map(data, title, min_ohc, max_ohc, area="world"):
 
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
-    # ax.set_facecolor("lightblue")
+    if background is not None:
+        ax.set_facecolor(background)
 
     set_area(ax, area)
 
@@ -95,9 +98,9 @@ def plot_sst_map(data, annotate=False, area="world", background=None, cmap="plas
         annotate (Bool, optional): TBC
         area (str, optional): area to plot for. Current options are "NA" (which will filter to the NA basin),
             "GS" (Gulf stream region of NA basin), or "world" (whole globe, default).
-        cmap (str or plt colormap, optional): colourmap to use for figure, defaults to "plasma".
         background (str, optional): if not None, will fill the plot with a background of the colour specified.
             Valid options: "lightblue", "black", etc. Defaults to None.
+        cmap (str or plt colormap, optional): colourmap to use for figure, defaults to "plasma".
         min_sst (float, optional): minimum value across entire dataset (ensures uniform colourbar).
         marker_size (float, optional): size of marker to use in scatter plots.
         max_sst (float, optional): maximum value across entire dataset (ensures uniform colourbar).
