@@ -79,7 +79,7 @@ Run:
 # Extra stuff:
 - `shred_ofam3sst_static_changing_sensor_nums.py` contains a script for training and generating reconstructions for changing numbers of sensors used
 - `original_SHRED_SST_NOAA.ipynb` runs the SHRED process on the NOAA data as defined in the original paper WIlliams et al. 2024 [[5]](https://royalsocietypublishing.org/rspa/article/480/2298/20240054/66770/).
-- Notebooks labelled `ExpX-...` containing a range of experiments and graph plots for different set ups of the problem space
+- Notebooks labelled `ExpX-...` contain a range of experiments and graph plots for different set ups of the problem space
 - `tuning_lstm_dimensions.ipynb` uses PCA to determine the internal (hidden) dimension of the LSTM portion of SHRED for the OFAM3 data
 
 
